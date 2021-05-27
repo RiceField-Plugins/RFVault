@@ -19,7 +19,7 @@ namespace RFLocker.Commands
         {
             if (command.Length > 1)
             {
-                caller.SendChat(Plugin.Inst.Translate("locker_command_invalid_parameter", Syntax), Plugin.MsgColor, Plugin.Conf.AnnouncerIconUrl);
+                caller.SendChat(Plugin.Inst.Translate("rflocker_command_invalid_parameter", Syntax), Plugin.MsgColor, Plugin.Conf.AnnouncerIconUrl);
                 return;
             }
 
@@ -40,7 +40,7 @@ namespace RFLocker.Commands
             switch (responseType)
             {
                 case EResponseType.TRASH_NOT_FOUND:
-                    player.SendChat(Plugin.Inst.Translate("locker_command_trash_not_found"), Plugin.MsgColor,
+                    player.SendChat(Plugin.Inst.Translate("rflocker_command_trash_not_found"), Plugin.MsgColor,
                         Plugin.Conf.AnnouncerIconUrl);
                     return false;
                 case EResponseType.SUCCESS:

@@ -59,7 +59,7 @@ namespace RFLocker.Serializables
                         }
                         catch (Exception e)
                         {
-                            player.SendChat(Plugin.Inst.Translate("locker_command_locker_failed_retrieving_items"),
+                            player.SendChat(Plugin.Inst.Translate("rflocker_command_locker_failed_retrieving_items"),
                                 Plugin.MsgColor, Plugin.Conf.AnnouncerIconUrl);
                     
                             Logger.LogError("[RFLocker] LoadError: " + e);

@@ -13,7 +13,7 @@ namespace RFLocker.Utils
 {
     public static class LockerUtil
     {
-        public static List<LockerModel> GetAllVirtualLockers(UnturnedPlayer player)
+        public static List<LockerModel> GetAllLockers(UnturnedPlayer player)
         {
             return Plugin.Conf.Lockers.Where(garage => player.CheckPermission(garage.Permission)).ToList();
         }
@@ -31,7 +31,7 @@ namespace RFLocker.Utils
             responseType = EResponseType.BLACKLIST_ITEM;
             blacklistedID = itemJar.item.id;
             var itemAsset = (ItemAsset)Assets.find(EAssetType.ITEM, itemJar.item.id);
-            player.SendChat(Plugin.Inst.Translate("locker_blacklist_item", itemAsset.id, itemAsset.itemName),
+            player.SendChat(Plugin.Inst.Translate("rflocker_blacklist_item", itemAsset.id, itemAsset.itemName),
                 Plugin.MsgColor,
                 Plugin.Conf.AnnouncerIconUrl);
             return false;

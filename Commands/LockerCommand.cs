@@ -21,7 +21,7 @@ namespace RFLocker.Commands
         {
             if (command.Length > 1)
             {
-                caller.SendChat(Plugin.Inst.Translate("locker_command_invalid_parameter", Syntax), Plugin.MsgColor, Plugin.Conf.AnnouncerIconUrl);
+                caller.SendChat(Plugin.Inst.Translate("rflocker_command_invalid_parameter", Syntax), Plugin.MsgColor, Plugin.Conf.AnnouncerIconUrl);
                 return;
             }
 
@@ -56,16 +56,16 @@ namespace RFLocker.Commands
             {
                 case EResponseType.LOCKER_NO_PERMISSION:
                     player.SendChat(
-                        Plugin.Inst.Translate("locker_command_locker_no_permission",
+                        Plugin.Inst.Translate("rflocker_command_locker_no_permission",
                             LockerModel.Parse(commands[0])), Plugin.MsgColor,
                         Plugin.Conf.AnnouncerIconUrl);
                     return false;
                 case EResponseType.LOCKER_NOT_FOUND:
-                    player.SendChat(Plugin.Inst.Translate("locker_command_locker_not_found"), Plugin.MsgColor,
+                    player.SendChat(Plugin.Inst.Translate("rflocker_command_locker_not_found"), Plugin.MsgColor,
                         Plugin.Conf.AnnouncerIconUrl);
                     return false;
                 case EResponseType.LOCKER_NOT_SELECTED:
-                    player.SendChat(Plugin.Inst.Translate("locker_command_locker_not_selected"), Plugin.MsgColor,
+                    player.SendChat(Plugin.Inst.Translate("rfrflocker_command_locker_not_selected"), Plugin.MsgColor,
                         Plugin.Conf.AnnouncerIconUrl);
                     return false;
                 case EResponseType.SUCCESS:

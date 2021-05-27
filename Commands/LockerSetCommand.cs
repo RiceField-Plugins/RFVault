@@ -20,7 +20,7 @@ namespace RFLocker.Commands
         {
             if (command.Length != 1)
             {
-                caller.SendChat(Plugin.Inst.Translate("locker_command_invalid_parameter", Syntax), Plugin.MsgColor, Plugin.Conf.AnnouncerIconUrl);
+                caller.SendChat(Plugin.Inst.Translate("rflocker_command_invalid_parameter", Syntax), Plugin.MsgColor, Plugin.Conf.AnnouncerIconUrl);
             }
 
             var player = (UnturnedPlayer) caller;
@@ -29,7 +29,7 @@ namespace RFLocker.Commands
             var locker = LockerModel.Parse(command[0]);
             if (Plugin.SelectedLockerDict.ContainsKey(player.CSteamID))
                 Plugin.SelectedLockerDict[player.CSteamID] = LockerModel.Parse(command[0]);
-            player.SendChat(Plugin.Inst.Translate("locker_command_lockerset_success", locker.Name), Plugin.MsgColor,
+            player.SendChat(Plugin.Inst.Translate("rflocker_command_lset_success", locker.Name), Plugin.MsgColor,
                 Plugin.Conf.AnnouncerIconUrl);
         }
         
@@ -40,11 +40,11 @@ namespace RFLocker.Commands
             switch (responseType)
             {
                 case EResponseType.LOCKER_NO_PERMISSION:
-                    player.SendChat(Plugin.Inst.Translate("locker_command_locker_no_permission"), Plugin.MsgColor,
+                    player.SendChat(Plugin.Inst.Translate("rflocker_command_locker_no_permission"), Plugin.MsgColor,
                         Plugin.Conf.AnnouncerIconUrl);
                     return false;
                 case EResponseType.LOCKER_NOT_FOUND:
-                    player.SendChat(Plugin.Inst.Translate("locker_command_locker_not_found"), Plugin.MsgColor,
+                    player.SendChat(Plugin.Inst.Translate("rflocker_command_locker_not_found"), Plugin.MsgColor,
                         Plugin.Conf.AnnouncerIconUrl);
                     return false;
                 case EResponseType.SUCCESS:
