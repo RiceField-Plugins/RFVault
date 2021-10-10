@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RFLocker", "RFLocker.csproj", "{1EDA5C18-80F4-46D2-B23C-4CEEE44C78BB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RFVault", "RFVault.csproj", "{1EDA5C18-80F4-46D2-B23C-4CEEE44C78BB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

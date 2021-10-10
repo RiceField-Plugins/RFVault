@@ -1,49 +1,41 @@
 ﻿using System.Collections.Generic;
 using System.Xml.Serialization;
-using RFLocker.Models;
+using RFVault.Enums;
+using RFVault.Models;
 using Rocket.API;
 
-namespace RFLocker
+namespace RFVault
 {
     public class Configuration : IRocketPluginConfiguration
     {
         public bool Enabled;
-        public bool EnableLogs;
-        public string DatabaseAddress;
-        public uint DatabasePort;
-        public string DatabaseUsername;
-        public string DatabasePassword;
-        public string DatabaseName;
-        public string DatabaseTableName;
+        public bool DebugMode;
+        public EDatabase Database;
+        public string MySqlConnectionString;
         public string MessageColor;
         public string AnnouncerIconUrl;
-        public TrashModel Trash;
-        [XmlArrayItem("Locker")]
-        public List<LockerModel> Lockers;
-        [XmlArrayItem("Blacklist")]
-        public List<BlacklistModel> BlacklistedItems;
+        public Trash Trash;
+        [XmlArrayItem("Vault")] public List<Vault> Vaults;
+        [XmlArrayItem("Blacklist")] public List<Blacklist> BlacklistedItems;
+
         public void LoadDefaults()
         {
             Enabled = true;
-            EnableLogs = false;
-            DatabaseAddress = "127.0.0.1";
-            DatabasePort = 3306;
-            DatabaseUsername = "root";
-            DatabasePassword = "123456";
-            DatabaseName = "unturned";
-            DatabaseTableName = "rflocker";
+            DebugMode = false;
+            Database = EDatabase.LITEDB;
+            MySqlConnectionString = "SERVER=127.0.0.1;DATABASE=unturned;UID=root;PASSWORD=123456;PORT=3306;";
             MessageColor = "magenta";
             AnnouncerIconUrl = "https://i.imgur.com/DtpkYHe.png";
-            Trash = new TrashModel(10, 10);
-            Lockers = new List<LockerModel>
+            Trash = new Trash(10, 10);
+            Vaults = new List<Vault>
             {
-                new LockerModel("Small", "locker.small", 4, 4),
-                new LockerModel("Medium", "locker.medium", 7, 7),
+                new Vault("Small", "vault.small", 4, 4),
+                new Vault("Medium", "vault.medium", 7, 7),
             };
-            BlacklistedItems = new List<BlacklistModel>
+            BlacklistedItems = new List<Blacklist>
             {
-                new BlacklistModel("lockerbypass.example", new List<ItemModel>{new ItemModel(1), new ItemModel(2), }),
-                new BlacklistModel("lockerbypass.example1", new List<ItemModel>{new ItemModel(3), new ItemModel(4), }),
+                new Blacklist("vaultbypass.example", new List<ushort> {1, 2}),
+                new Blacklist("vaultbypass.example1", new List<ushort> {3, 4}),
             };
         }
     }

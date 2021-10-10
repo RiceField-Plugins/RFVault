@@ -1,20 +1,20 @@
 ﻿using System.Xml.Serialization;
 
-namespace RFLocker.Models
+namespace RFVault.Models
 {
-    public class TrashModel
+    public class Trash
     {
         [XmlAttribute]
         public byte Width;
         [XmlAttribute]
         public byte Height;
 
-        public TrashModel()
+        public Trash()
         {
             
         }
 
-        public TrashModel(byte width, byte height)
+        public Trash(byte width, byte height)
         {
             Width = width;
             Height = height;

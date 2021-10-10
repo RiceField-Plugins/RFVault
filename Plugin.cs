@@ -1,67 +1,58 @@
-﻿using System.Collections.Generic;
-using HarmonyLib;
-using RFLocker.DatabaseManagers;
-using RFLocker.EventListeners;
-using RFLocker.Models;
+﻿using HarmonyLib;
+using RFVault.DatabaseManagers;
+using RFVault.Enums;
+using RFVault.EventListeners;
 using Rocket.API.Collections;
 using Rocket.Core.Plugins;
-using Rocket.Unturned;
 using Rocket.Unturned.Chat;
 using Rocket.Unturned.Events;
 using SDG.Unturned;
-using Steamworks;
 using UnityEngine;
 using Logger = Rocket.Core.Logging.Logger;
 
-namespace RFLocker
+namespace RFVault
 {
     public class Plugin : RocketPlugin<Configuration>
     {
-        internal static Dictionary<CSteamID, LockerModel> SelectedLockerDict;
-        internal static Dictionary<CSteamID, bool> IsAccessingLocker;
-        internal static Harmony Harmony;
         public static Plugin Inst;
         public static Configuration Conf;
-        public static MySqlDb DbManager;
-        public static Color MsgColor;
+        internal static Color MsgColor;
+        internal DatabaseManager Database;
+        private static Harmony m_Harmony;
 
         public override TranslationList DefaultTranslations => new TranslationList
         {
-            {"rflocker_blacklist_item", "[RFLocker] BLACKLIST: [ID] {0} [Name] {1}"},
-            {"rflocker_command_invalid_parameter", "[RFLocker] Invalid parameter! Usage: {0}"},
-            {"rflocker_command_locker_no_permission", "[RFLocker] You don't have permission to access {0} Locker!"},
-            {"rflocker_command_locker_not_found", "[RFLocker] Locker not found!"},
-            {"rflocker_command_locker_not_selected", "[RFLocker] Please set default Locker first! /lset <lockerName> or /locker <lockerName>"},
-            {"rflocker_command_llist_success", "[RFLocker] Available Lockers: {0}"},
-            {"rflocker_command_lset_success", "[RFLocker] Successfully set {0} Locker as default Locker!"},
-            {"rflocker_command_trash_not_found", "[RFLocker] Trash not found!"},
-            {"rflocker_command_locker_failed_retrieving_items", "[RFLocker] Failed in opening Locker! Try again later"}
+            {$"{EResponse.BLACKLIST}", "[RFVault] BLACKLIST: {0} ({1})"},
+            {$"{EResponse.INVALID_PARAMETER}", "[RFVault] Invalid parameter! Usage: {0}"},
+            {$"{EResponse.NO_PERMISSION}", "[RFVault] You don't have permission to access {0} Vault!"},
+            {$"{EResponse.NO_PERMISSION}", "[RFVault] You don't have permission to access any Vault!"},
+            {$"{EResponse.VAULT_NOT_FOUND}", "[RFVault] Vault not found!"},
+            {$"{EResponse.VAULT_NOT_SELECTED}", "[RFVault] Please set default Vault first! /vset <vaultName> or /vault <vaultName>"},
+            {$"{EResponse.VAULTS}", "[RFVault] Available Vaults: {0}"},
+            {$"{EResponse.VAULTSET}", "[RFVault] Successfully set {0} Locker as default Vault!"},
+            {$"{EResponse.SAME_DATABASE}", "[RFVault] You can't run migrate to the same database!"},
+            {$"{EResponse.MIGRATION_START}", "[RFVault] Starting migration from {0} to {1}..."},
+            {$"{EResponse.MIGRATION_FINISH}", "[RFVault] Migration finished!"},
+            {$"{EResponse.DATABASE_NOT_READY}", "[RFVault] Database is not ready. Please wait..."},
         };
 
         protected override void Load()
         {
             Inst = this;
             Conf = Configuration.Instance;
-            if (!Configuration.Instance.Enabled)
+            if (Conf.Enabled)
             {
-                Logger.LogWarning($"[{Name}] RFLocker: DISABLED");
-                Unload();
-                return;
+                MsgColor = UnturnedChat.GetColorFromName(Conf.MessageColor, Color.green);
+                Database = new DatabaseManager();
+                
+                m_Harmony = new Harmony("RFVault.Patches");
+                m_Harmony.PatchAll();
+
+                UnturnedPlayerEvents.OnPlayerUpdateGesture += PlayerEvent.OnGesture;
+                ItemManager.onTakeItemRequested += PlayerEvent.OnTakeItem;
             }
-
-            DbManager = new MySqlDb(Conf.DatabaseAddress, Conf.DatabasePort, Conf.DatabaseUsername,
-                Conf.DatabasePassword, Conf.DatabaseName, Conf.DatabaseTableName, MySqlDb.CreateTableQuery);
-            MsgColor = UnturnedChat.GetColorFromName(Conf.MessageColor, Color.green);
-            SelectedLockerDict = new Dictionary<CSteamID, LockerModel>();
-            IsAccessingLocker = new Dictionary<CSteamID, bool>();
-
-            Harmony = new Harmony("RFLocker.Patches");
-            Harmony.PatchAll();
-
-            U.Events.OnPlayerConnected += PlayerEvent.OnConnected;
-            U.Events.OnPlayerDisconnected += PlayerEvent.OnDisconnected;
-            UnturnedPlayerEvents.OnPlayerUpdateGesture += PlayerEvent.OnGesture;
-            ItemManager.onTakeItemRequested += PlayerEvent.OnTakeItem;
+            else
+                Logger.LogError($"[{Name}] RFVault: DISABLED");
 
             Logger.LogWarning($"[{Name}] Plugin loaded successfully!");
             Logger.LogWarning($"[{Name}] {Name} v1.0.0");
@@ -70,16 +61,16 @@ namespace RFLocker
 
         protected override void Unload()
         {
+            if (Conf.Enabled)
+            {
+                m_Harmony.UnpatchAll(m_Harmony.Id);
+
+                UnturnedPlayerEvents.OnPlayerUpdateGesture -= PlayerEvent.OnGesture;
+                ItemManager.onTakeItemRequested -= PlayerEvent.OnTakeItem;
+            }
+
             Inst = null;
             Conf = null;
-            DbManager = null;
-            SelectedLockerDict.Clear();
-            IsAccessingLocker.Clear();
-            Harmony.UnpatchAll("RFLocker.Patches");
-
-            U.Events.OnPlayerConnected -= PlayerEvent.OnConnected;
-            U.Events.OnPlayerDisconnected -= PlayerEvent.OnDisconnected;
-            UnturnedPlayerEvents.OnPlayerUpdateGesture -= PlayerEvent.OnGesture;
 
             Logger.LogWarning($"[{Name}] Plugin unloaded successfully!");
         }

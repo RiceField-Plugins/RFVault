@@ -1,0 +1,142 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+    <PropertyGroup>
+        <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+        <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+        <ProjectGuid>{1EDA5C18-80F4-46D2-B23C-4CEEE44C78BB}</ProjectGuid>
+        <OutputType>Library</OutputType>
+        <AppDesignerFolder>Properties</AppDesignerFolder>
+        <RootNamespace>RFVault</RootNamespace>
+        <AssemblyName>RFVault</AssemblyName>
+        <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+        <FileAlignment>512</FileAlignment>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <DebugSymbols>true</DebugSymbols>
+        <DebugType>full</DebugType>
+        <Optimize>false</Optimize>
+        <OutputPath>bin\Debug\</OutputPath>
+        <DefineConstants>DEBUG;TRACE</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <DebugType>pdbonly</DebugType>
+        <Optimize>true</Optimize>
+        <OutputPath>bin\Release\</OutputPath>
+        <DefineConstants>TRACE</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+    </PropertyGroup>
+    <ItemGroup>
+        <Compile Include="API\Interfaces\IVaultManager.cs" />
+        <Compile Include="Commands\VaultCommand.cs" />
+        <Compile Include="Commands\VaultCopyCommand.cs" />
+        <Compile Include="Commands\VaultMigrateCommand.cs" />
+        <Compile Include="Commands\VaultsCommand.cs" />
+        <Compile Include="Commands\VaultSetCommand.cs" />
+        <Compile Include="Commands\VaultTransferCommand.cs" />
+        <Compile Include="Commands\SuperVaultCommand.cs" />
+        <Compile Include="Commands\TrashCommand.cs" />
+        <Compile Include="Configuration.cs" />
+        <Compile Include="DatabaseManagers\DatabaseManager.cs" />
+        <Compile Include="DatabaseManagers\DataStore.cs" />
+        <Compile Include="DatabaseManagers\VaultManager.cs" />
+        <Compile Include="Enums\EDatabase.cs" />
+        <Compile Include="Enums\EResponse.cs" />
+        <Compile Include="EventListeners\PlayerEvent.cs" />
+        <Compile Include="Helpers\ChatHelper.cs" />
+        <Compile Include="Models\Blacklist.cs" />
+        <Compile Include="Models\ItemJarWrapper.cs" />
+        <Compile Include="Models\ItemsWrapper.cs" />
+        <Compile Include="Models\ItemWrapper.cs" />
+        <Compile Include="Models\PlayerVault.cs" />
+        <Compile Include="Models\Trash.cs" />
+        <Compile Include="Models\Vault.cs" />
+        <Compile Include="Patches\ReceiveDragItem.cs" />
+        <Compile Include="Patches\ReceiveSwapItem.cs" />
+        <Compile Include="PlayerComponent.cs" />
+        <Compile Include="Plugin.cs" />
+        <Compile Include="Properties\AssemblyInfo.cs" />
+        <Compile Include="Utils\ByteArrayExtensions.cs" />
+        <Compile Include="Utils\Extensions.cs" />
+        <Compile Include="Utils\VaultUtil.cs" />
+    </ItemGroup>
+    <ItemGroup>
+      <None Include="packages.config" />
+    </ItemGroup>
+    <ItemGroup>
+      <Reference Include="0Harmony, Version=2.1.1.0, Culture=neutral, PublicKeyToken=null">
+        <HintPath>..\..\..\Libraries\Harmony\0Harmony.dll</HintPath>
+      </Reference>
+      <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+        <HintPath>..\..\..\Libraries\RocketMod\Assembly-CSharp.dll</HintPath>
+      </Reference>
+      <Reference Include="Dapper, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null">
+        <HintPath>..\..\..\Libraries\Dapper\Dapper.dll</HintPath>
+      </Reference>
+      <Reference Include="I18N, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756">
+        <HintPath>..\..\..\Libraries\Dapper\I18N.v2.dll</HintPath>
+      </Reference>
+      <Reference Include="I18N.West, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756">
+        <HintPath>..\..\..\Libraries\Dapper\I18N.v2.West.dll</HintPath>
+      </Reference>
+      <Reference Include="LiteDB, Version=5.0.11.0, Culture=neutral, PublicKeyToken=4ee40123013c9f27">
+        <HintPath>..\..\..\Libraries\LiteDB\LiteDB.dll</HintPath>
+      </Reference>
+      <Reference Include="litedbasync, Version=0.0.11.0, Culture=neutral, PublicKeyToken=null">
+        <HintPath>..\..\..\Libraries\LiteDB\litedbasync.dll</HintPath>
+      </Reference>
+      <Reference Include="MySql.Data, Version=8.0.25.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d">
+        <HintPath>..\..\..\Libraries\Dapper\MySql.Data.8.0.25.dll</HintPath>
+      </Reference>
+      <Reference Include="Newtonsoft.Json, Version=7.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed">
+        <HintPath>..\..\..\Libraries\RocketMod\Newtonsoft.Json.dll</HintPath>
+      </Reference>
+      <Reference Include="Rocket.API, Version=4.9.3.4, Culture=neutral, PublicKeyToken=null">
+        <HintPath>..\..\..\Libraries\RocketMod\Rocket.API.dll</HintPath>
+      </Reference>
+      <Reference Include="Rocket.Core, Version=4.9.3.4, Culture=neutral, PublicKeyToken=null">
+        <HintPath>..\..\..\Libraries\RocketMod\Rocket.Core.dll</HintPath>
+      </Reference>
+      <Reference Include="Rocket.Unturned, Version=4.9.3.13, Culture=neutral, PublicKeyToken=null">
+        <HintPath>..\..\..\Libraries\RocketMod\Rocket.Unturned.dll</HintPath>
+      </Reference>
+      <Reference Include="RocketExtensions, Version=1.1.0.0, Culture=neutral, PublicKeyToken=null">
+        <HintPath>..\..\..\Libraries\UniTask\RocketExtensions.dll</HintPath>
+      </Reference>
+      <Reference Include="SDG.NetTransport, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+        <HintPath>..\..\..\Libraries\RocketMod\SDG.NetTransport.dll</HintPath>
+      </Reference>
+      <Reference Include="Steamworks.NET, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+        <HintPath>..\..\..\Libraries\RocketMod\Steamworks.NET.dll</HintPath>
+      </Reference>
+      <Reference Include="System" />
+      <Reference Include="System.Data" />
+      <Reference Include="System.Xml" />
+      <Reference Include="UniTask, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+        <HintPath>..\..\..\Libraries\UniTask\UniTask.dll</HintPath>
+      </Reference>
+      <Reference Include="UniTask.Linq, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+        <HintPath>..\..\..\Libraries\UniTask\UniTask.Linq.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+        <HintPath>..\..\..\Libraries\RocketMod\UnityEngine.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+        <HintPath>..\..\..\Libraries\RocketMod\UnityEngine.CoreModule.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+    <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+    <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+         Other similar extension points exist, see Microsoft.Common.targets.
+    <Target Name="BeforeBuild">
+    </Target>
+    <Target Name="AfterBuild">
+    </Target>
+    -->
+
+</Project>

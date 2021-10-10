@@ -4,7 +4,7 @@ using SDG.Unturned;
 using Steamworks;
 using UnityEngine;
 
-namespace RFLocker.Helpers
+namespace RFVault.Helpers
 {
     public static class ChatHelper
     {

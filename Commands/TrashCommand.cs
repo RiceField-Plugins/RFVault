@@ -1,53 +1,35 @@
-﻿using System;
-using System.Collections.Generic;
-using RFLocker.Enums;
-using RFLocker.Utils;
-using Rocket.API;
+﻿using Cysharp.Threading.Tasks;
+using RFVault.Enums;
+using RFVault.Helpers;
+using RFVault.Utils;
+using Rocket.Core.Logging;
 using Rocket.Unturned.Player;
+using RocketExtensions.Models;
+using RocketExtensions.Plugins;
+using RocketExtensions.Utilities.ShimmyMySherbet.Extensions;
 
-namespace RFLocker.Commands
+namespace RFVault.Commands
 {
-    public class TrashCommand : IRocketCommand
+    [AllowedCaller(Rocket.API.AllowedCaller.Player)]
+    [CommandName("trash")]
+    [Permissions("trash")]
+    [CommandInfo("Open a trash storage.", "/trash")]
+    public class TrashCommand : RocketCommand
     {
-        public AllowedCaller AllowedCaller => AllowedCaller.Player;
-        public string Name => "trash";
-        public string Help => "Open a trash storage.";
-        public string Syntax => "/trash";
-        public List<string> Aliases => new List<string>();
-        public List<string> Permissions => new List<string> {"trash"};
-        public void Execute(IRocketPlayer caller, string[] command)
+        public override async UniTask Execute(CommandContext context)
         {
-            if (command.Length > 1)
+            if (context.CommandRawArguments.Length != 0)
             {
-                caller.SendChat(Plugin.Inst.Translate("rflocker_command_invalid_parameter", Syntax), Plugin.MsgColor, Plugin.Conf.AnnouncerIconUrl);
+                await ThreadTool.RunOnGameThreadAsync(() => ChatHelper.Say(context.Player,
+                    Plugin.Inst.Translate(EResponse.INVALID_PARAMETER.ToString(), Syntax),
+                    Plugin.MsgColor, Plugin.Conf.AnnouncerIconUrl));
                 return;
             }
 
-            var player = (UnturnedPlayer) caller;
-            if (command.Length == 0)
-            {
-                if (!CheckResponse(player,  out var responseType))
-                    return;
-                LockerUtil.OpenVirtualTrash(player);
-            }
-        }
-        
-        private static bool CheckResponse(UnturnedPlayer player, out EResponseType responseType)
-        {
-            responseType = EResponseType.SUCCESS;
-            if (Plugin.Conf.Trash == null)
-                responseType = EResponseType.TRASH_NOT_FOUND;
-            switch (responseType)
-            {
-                case EResponseType.TRASH_NOT_FOUND:
-                    player.SendChat(Plugin.Inst.Translate("rflocker_command_trash_not_found"), Plugin.MsgColor,
-                        Plugin.Conf.AnnouncerIconUrl);
-                    return false;
-                case EResponseType.SUCCESS:
-                    return true;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(responseType), responseType, null);
-            }
+            var player = (UnturnedPlayer) context.Player;
+            if (Plugin.Conf.DebugMode)
+                Logger.LogWarning($"[RFVault] [DEBUG] {player.CharacterName} is accessing Trash");
+            await VaultUtil.OpenVirtualTrashAsync(player);
         }
     }
 }

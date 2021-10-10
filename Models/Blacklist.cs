@@ -1,20 +1,20 @@
 ﻿using System.Collections.Generic;
 using System.Xml.Serialization;
 
-namespace RFLocker.Models
+namespace RFVault.Models
 {
-    public class BlacklistModel
+    public class Blacklist
     {
         [XmlAttribute]
         public string BypassPermission;
-        [XmlArrayItem("Item")]
-        public List<ItemModel> Items;
+        [XmlArrayItem("Id")]
+        public List<ushort> Items;
 
-        public BlacklistModel()
+        public Blacklist()
         {
             
         }
-        public BlacklistModel(string bypassPermission, List<ItemModel> items)
+        public Blacklist(string bypassPermission, List<ushort> items)
         {
             BypassPermission = bypassPermission;
             Items = items;

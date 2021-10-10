@@ -1,9 +1,9 @@
 ﻿using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 
-namespace RFLocker.Utils
+namespace RFVault.Utils
 {
-    public static class ByteArrayUtil
+    public static class ByteArrayExtensions
     {
         public static byte[] Serialize<T>(this T m)
         {
