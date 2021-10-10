@@ -25,7 +25,7 @@ namespace RFVault
             {$"{EResponse.BLACKLIST}", "[RFVault] BLACKLIST: {0} ({1})"},
             {$"{EResponse.INVALID_PARAMETER}", "[RFVault] Invalid parameter! Usage: {0}"},
             {$"{EResponse.NO_PERMISSION}", "[RFVault] You don't have permission to access {0} Vault!"},
-            {$"{EResponse.NO_PERMISSION}", "[RFVault] You don't have permission to access any Vault!"},
+            {$"{EResponse.NO_PERMISSION_ALL}", "[RFVault] You don't have permission to access any Vault!"},
             {$"{EResponse.VAULT_NOT_FOUND}", "[RFVault] Vault not found!"},
             {$"{EResponse.VAULT_NOT_SELECTED}", "[RFVault] Please set default Vault first! /vset <vaultName> or /vault <vaultName>"},
             {$"{EResponse.VAULTS}", "[RFVault] Available Vaults: {0}"},
