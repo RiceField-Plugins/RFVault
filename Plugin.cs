@@ -20,22 +20,6 @@ namespace RFVault
         internal DatabaseManager Database;
         private static Harmony m_Harmony;
 
-        public override TranslationList DefaultTranslations => new TranslationList
-        {
-            {$"{EResponse.BLACKLIST}", "[RFVault] BLACKLIST: {0} ({1})"},
-            {$"{EResponse.INVALID_PARAMETER}", "[RFVault] Invalid parameter! Usage: {0}"},
-            {$"{EResponse.NO_PERMISSION}", "[RFVault] You don't have permission to access {0} Vault!"},
-            {$"{EResponse.NO_PERMISSION_ALL}", "[RFVault] You don't have permission to access any Vault!"},
-            {$"{EResponse.VAULT_NOT_FOUND}", "[RFVault] Vault not found!"},
-            {$"{EResponse.VAULT_NOT_SELECTED}", "[RFVault] Please set default Vault first! /vset <vaultName> or /vault <vaultName>"},
-            {$"{EResponse.VAULTS}", "[RFVault] Available Vaults: {0}"},
-            {$"{EResponse.VAULTSET}", "[RFVault] Successfully set {0} Locker as default Vault!"},
-            {$"{EResponse.SAME_DATABASE}", "[RFVault] You can't run migrate to the same database!"},
-            {$"{EResponse.MIGRATION_START}", "[RFVault] Starting migration from {0} to {1}..."},
-            {$"{EResponse.MIGRATION_FINISH}", "[RFVault] Migration finished!"},
-            {$"{EResponse.DATABASE_NOT_READY}", "[RFVault] Database is not ready. Please wait..."},
-        };
-
         protected override void Load()
         {
             Inst = this;
@@ -74,5 +58,21 @@ namespace RFVault
 
             Logger.LogWarning($"[{Name}] Plugin unloaded successfully!");
         }
+
+        public override TranslationList DefaultTranslations => new TranslationList
+        {
+            {$"{EResponse.BLACKLIST}", "[RFVault] BLACKLIST: {0} ({1})"},
+            {$"{EResponse.INVALID_PARAMETER}", "[RFVault] Invalid parameter! Usage: {0}"},
+            {$"{EResponse.NO_PERMISSION}", "[RFVault] You don't have permission to access {0} Vault!"},
+            {$"{EResponse.NO_PERMISSION_ALL}", "[RFVault] You don't have permission to access any Vault!"},
+            {$"{EResponse.VAULT_NOT_FOUND}", "[RFVault] Vault not found!"},
+            {$"{EResponse.VAULT_NOT_SELECTED}", "[RFVault] Please set default Vault first! /vset <vaultName> or /vault <vaultName>"},
+            {$"{EResponse.VAULTS}", "[RFVault] Available Vaults: {0}"},
+            {$"{EResponse.VAULTSET}", "[RFVault] Successfully set {0} Locker as default Vault!"},
+            {$"{EResponse.SAME_DATABASE}", "[RFVault] You can't run migrate to the same database!"},
+            {$"{EResponse.MIGRATION_START}", "[RFVault] Starting migration from {0} to {1}..."},
+            {$"{EResponse.MIGRATION_FINISH}", "[RFVault] Migration finished!"},
+            {$"{EResponse.DATABASE_NOT_READY}", "[RFVault] Database is not ready. Please wait..."},
+        };
     }
 }

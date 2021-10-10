@@ -7,7 +7,7 @@ namespace RFVault.Models
     {
         public int Id { get; set; }
         public ulong SteamId { get; set; }
-        public string VaultName { get; set; }
+        public string VaultName { get; set; } = string.Empty;
         public ItemsWrapper VaultContent { get; set; } = new ItemsWrapper();
         public DateTime LastUpdated { get; set; } = DateTime.Now;
 

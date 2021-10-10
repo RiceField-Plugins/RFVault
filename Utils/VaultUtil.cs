@@ -60,7 +60,7 @@ namespace RFVault.Utils
             });
         }
 
-        internal static void LoadVault(UnturnedPlayer player, Vault vault)
+        private static void LoadVault(UnturnedPlayer player, Vault vault)
         {
             var vaultItems = new Items(7);
             vaultItems.resize(vault.Width, vault.Height);

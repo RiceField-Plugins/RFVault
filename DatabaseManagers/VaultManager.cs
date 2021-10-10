@@ -18,13 +18,13 @@ namespace RFVault.DatabaseManagers
         internal static bool Ready { get; set; }
         internal List<PlayerVault> Collection { get; set; } = new List<PlayerVault>();
 
-        private const string LiteDB_TableName = "vault";
+        private static readonly string LiteDB_TableName = "vault";
 
-        private const string Json_FileName = "vault.json";
+        private static readonly string Json_FileName = "vault.json";
         private DataStore<List<PlayerVault>> Json_DataStore { get; set; }
 
-        private const string MySql_TableName = "rfvault";
-        private const string MySql_CreateTableQuery = 
+        private static readonly string MySql_TableName = "rfvault";
+        private static readonly string MySql_CreateTableQuery = 
             "`Id` INT NOT NULL AUTO_INCREMENT, " + 
             "`SteamId` VARCHAR(32) NOT NULL DEFAULT '0', " + 
             "`VaultName` VARCHAR(255) NOT NULL DEFAULT 'N/A', " + 
@@ -92,7 +92,7 @@ namespace RFVault.DatabaseManagers
         private async UniTask<List<PlayerVault>> LiteDB_LoadAsync()
         {
             var result = new List<PlayerVault>();
-            using (var db = new LiteDatabaseAsync(Plugin.Inst.Database.LiteDB_ConnectionString))
+            using (var db = new LiteDatabaseAsync(DatabaseManager.LiteDB_ConnectionString))
             {
                 var col = db.GetCollection<PlayerVault>(LiteDB_TableName);
                 var all = await col.FindAllAsync();
@@ -120,7 +120,7 @@ namespace RFVault.DatabaseManagers
 
         private async UniTask MySQL_CreateTableAsync(string tableName, string createTableQuery)
         {
-            using (var connection = new MySql.Data.MySqlClient.MySqlConnection(Plugin.Inst.Database.MySql_ConnectionString))
+            using (var connection = new MySql.Data.MySqlClient.MySqlConnection(DatabaseManager.MySql_ConnectionString))
             {
                 await connection.ExecuteAsync($"CREATE TABLE IF NOT EXISTS `{tableName}` ({createTableQuery});");
             }
@@ -129,7 +129,7 @@ namespace RFVault.DatabaseManagers
         private async UniTask<List<PlayerVault>> MySQL_LoadAsync()
         {
             var result = new List<PlayerVault>();
-            using (var connection = new MySql.Data.MySqlClient.MySqlConnection(Plugin.Inst.Database.MySql_ConnectionString))
+            using (var connection = new MySql.Data.MySqlClient.MySqlConnection(DatabaseManager.MySql_ConnectionString))
             {
                 var loadQuery = $"SELECT * FROM `{MySql_TableName}`;";
                 var databases = await connection.QueryAsync(loadQuery);
@@ -181,7 +181,7 @@ namespace RFVault.DatabaseManagers
             switch (Plugin.Conf.Database)
             {
                 case EDatabase.LITEDB:
-                    using (var db = new LiteDatabaseAsync(Plugin.Inst.Database.LiteDB_ConnectionString))
+                    using (var db = new LiteDatabaseAsync(DatabaseManager.LiteDB_ConnectionString))
                     {
                         var col = db.GetCollection<PlayerVault>(LiteDB_TableName);
                         await col.InsertAsync(playerVault);
@@ -192,7 +192,7 @@ namespace RFVault.DatabaseManagers
                     await Json_DataStore.SaveAsync(Collection);
                     break;
                 case EDatabase.MYSQL:
-                    using (var connection = new MySql.Data.MySqlClient.MySqlConnection(Plugin.Inst.Database.MySql_ConnectionString))
+                    using (var connection = new MySql.Data.MySqlClient.MySqlConnection(DatabaseManager.MySql_ConnectionString))
                     {
                         var serialized = playerVault.VaultContent.Serialize();
                         var vaultContent = serialized.ToBase64();
@@ -228,7 +228,7 @@ namespace RFVault.DatabaseManagers
             switch (Plugin.Conf.Database)
             {
                 case EDatabase.LITEDB:
-                    using (var db = new LiteDatabaseAsync(Plugin.Inst.Database.LiteDB_ConnectionString))
+                    using (var db = new LiteDatabaseAsync(DatabaseManager.LiteDB_ConnectionString))
                     {
                         var col = db.GetCollection<PlayerVault>(LiteDB_TableName);
                         return await col.UpdateAsync(playerVault);
@@ -237,7 +237,7 @@ namespace RFVault.DatabaseManagers
                     return await Json_DataStore.SaveAsync(Collection);
                 case EDatabase.MYSQL:
                     int result;
-                    using (var connection = new MySql.Data.MySqlClient.MySqlConnection(Plugin.Inst.Database.MySql_ConnectionString))
+                    using (var connection = new MySql.Data.MySqlClient.MySqlConnection(DatabaseManager.MySql_ConnectionString))
                     {
                         var serialized = playerVault.VaultContent.Serialize();
                         var vaultContent = serialized.ToBase64();
@@ -269,7 +269,7 @@ namespace RFVault.DatabaseManagers
                             break;
                         case EDatabase.MYSQL:
                             using (var connection =
-                                new MySql.Data.MySqlClient.MySqlConnection(Plugin.Inst.Database.MySql_ConnectionString))
+                                new MySql.Data.MySqlClient.MySqlConnection(DatabaseManager.MySql_ConnectionString))
                             {
                                 var deleteQuery = $"DELETE FROM {MySql_TableName};";
                                 await connection.ExecuteAsync(deleteQuery);
@@ -282,7 +282,7 @@ namespace RFVault.DatabaseManagers
                                     parameter.Add("@Id", playerVault.Id, DbType.Int32, ParameterDirection.Input);
                                     parameter.Add("@SteamId", playerVault.SteamId, DbType.String, ParameterDirection.Input);
                                     parameter.Add("@VaultName", playerVault.VaultName, DbType.String, ParameterDirection.Input);
-                                    parameter.Add("@VaultContent", vaultContent, DbType.String, ParameterDirection.Input);
+                                    parameter.Add("@VaultContent", vaultContent ?? string.Empty, DbType.String, ParameterDirection.Input);
                                     var insertQuery =
                                         $"INSERT INTO `{MySql_TableName}` (Id, SteamId, VaultName, VaultContent) " +
                                         "VALUES(@Id, @SteamId, @VaultName, @VaultContent);";
@@ -299,7 +299,7 @@ namespace RFVault.DatabaseManagers
                     switch (to)
                     {
                         case EDatabase.LITEDB:
-                            using (var db = new LiteDatabaseAsync(Plugin.Inst.Database.LiteDB_ConnectionString))
+                            using (var db = new LiteDatabaseAsync(DatabaseManager.LiteDB_ConnectionString))
                             {
                                 var col = db.GetCollection<PlayerVault>(LiteDB_TableName);
                                 await col.DeleteAllAsync();
@@ -308,7 +308,7 @@ namespace RFVault.DatabaseManagers
                             break;
                         case EDatabase.MYSQL:
                             using (var connection =
-                                new MySql.Data.MySqlClient.MySqlConnection(Plugin.Inst.Database.MySql_ConnectionString))
+                                new MySql.Data.MySqlClient.MySqlConnection(DatabaseManager.MySql_ConnectionString))
                             {
                                 var deleteQuery = $"DELETE FROM {MySql_TableName};";
                                 await connection.ExecuteAsync(deleteQuery);
@@ -321,7 +321,7 @@ namespace RFVault.DatabaseManagers
                                     parameter.Add("@Id", playerVault.Id, DbType.Int32, ParameterDirection.Input);
                                     parameter.Add("@SteamId", playerVault.SteamId, DbType.String, ParameterDirection.Input);
                                     parameter.Add("@VaultName", playerVault.VaultName, DbType.String, ParameterDirection.Input);
-                                    parameter.Add("@VaultContent", vaultContent, DbType.String, ParameterDirection.Input);
+                                    parameter.Add("@VaultContent", vaultContent ?? string.Empty, DbType.String, ParameterDirection.Input);
                                     var insertQuery =
                                         $"INSERT INTO `{MySql_TableName}` (Id, SteamId, VaultName, VaultContent) " +
                                         "VALUES(@Id, @SteamId, @VaultName, @VaultContent);";
@@ -338,7 +338,7 @@ namespace RFVault.DatabaseManagers
                     switch (to)
                     {
                         case EDatabase.LITEDB:
-                            using (var db = new LiteDatabaseAsync(Plugin.Inst.Database.LiteDB_ConnectionString))
+                            using (var db = new LiteDatabaseAsync(DatabaseManager.LiteDB_ConnectionString))
                             {
                                 var col = db.GetCollection<PlayerVault>(LiteDB_TableName);
                                 await col.DeleteAllAsync();
