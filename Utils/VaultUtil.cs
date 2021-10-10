@@ -24,7 +24,7 @@ namespace RFVault.Utils
         {
             var blacklist = Plugin.Conf.BlacklistedItems.Any(blacklistedItem => blacklistedItem.Items.Any(
                 blacklistItemId => blacklistItemId == id && !player.HasPermission(blacklistedItem.BypassPermission)));
-            if (!blacklist) 
+            if (!blacklist)
                 return false;
             var itemAsset = (ItemAsset) Assets.find(EAssetType.ITEM, id);
             ChatHelper.Say(player,
@@ -32,7 +32,6 @@ namespace RFVault.Utils
                 Plugin.MsgColor,
                 Plugin.Conf.AnnouncerIconUrl);
             return true;
-
         }
 
         internal static async UniTask OpenVaultAsync(UnturnedPlayer player, Vault vault)
@@ -42,8 +41,7 @@ namespace RFVault.Utils
             {
                 await Plugin.Inst.Database.VaultManager.AddAsync(player.CSteamID.m_SteamID, vault);
                 pComponent.IsSubmitting = true;
-                var playerVault = Plugin.Inst.Database.VaultManager.Get(player.CSteamID.m_SteamID, vault);
-                await ThreadTool.RunOnGameThreadAsync(() => playerVault.VaultContent.LoadVault(player, vault));
+                await ThreadTool.RunOnGameThreadAsync(() => LoadVault(player, vault));
             }
             catch (Exception e)
             {
@@ -60,6 +58,30 @@ namespace RFVault.Utils
                 player.Player.inventory.updateItems(7, lockerItems);
                 player.Player.inventory.sendStorage();
             });
+        }
+
+        internal static void LoadVault(UnturnedPlayer player, Vault vault)
+        {
+            var vaultItems = new Items(7);
+            vaultItems.resize(vault.Width, vault.Height);
+
+            var loadedVault = Plugin.Inst.Database.VaultManager.Get(player.CSteamID.m_SteamID, vault);
+            foreach (var itemJarWrapper in loadedVault.VaultContent.Items)
+                vaultItems.addItem(itemJarWrapper.X, itemJarWrapper.Y, itemJarWrapper.Rotation,
+                    itemJarWrapper.Item.ToItem());
+
+            vaultItems.onStateUpdated += () =>
+            {
+                var itemJarWrappers = vaultItems.items.Select(ItemJarWrapper.Create).ToList();
+                loadedVault.VaultContent.Height = vault.Height;
+                loadedVault.VaultContent.Width = vault.Width;
+                loadedVault.VaultContent.Items = itemJarWrappers;
+                UniTask.RunOnThreadPool(async () =>
+                    await Plugin.Inst.Database.VaultManager.UpdateAsync(player.CSteamID.m_SteamID, vault)).Forget(
+                    exception => Logger.LogError("[RFVault] [ERROR] VaultManager UpdateAsync: " + exception));
+            };
+            player.Player.inventory.updateItems(7, vaultItems);
+            player.Player.inventory.sendStorage();
         }
     }
 }

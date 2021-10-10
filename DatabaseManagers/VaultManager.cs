@@ -25,7 +25,7 @@ namespace RFVault.DatabaseManagers
 
         private const string MySql_TableName = "rfvault";
         private const string MySql_CreateTableQuery = 
-            "`Id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, " + 
+            "`Id` INT NOT NULL AUTO_INCREMENT, " + 
             "`SteamId` VARCHAR(32) NOT NULL DEFAULT '0', " + 
             "`VaultName` VARCHAR(255) NOT NULL DEFAULT 'N/A', " + 
             "`VaultContent` TEXT NOT NULL, " + 
@@ -138,7 +138,7 @@ namespace RFVault.DatabaseManagers
                 let vaultContent = byteArray.Deserialize<ItemsWrapper>()
                 select new PlayerVault
                 {
-                    Id = (int) database["Id"],
+                    Id = Convert.ToInt32(database["Id"]),
                     SteamId = Convert.ToUInt64(database["SteamID"]),
                     VaultName = database["VaultName"].ToString(),
                     VaultContent = vaultContent,

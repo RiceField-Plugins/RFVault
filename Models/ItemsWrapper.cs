@@ -44,24 +44,5 @@ namespace RFVault.Models
 
             return items;
         }
-
-        public void LoadVault(UnturnedPlayer player, Vault vault)
-        {
-            var vaultItems = new Items(Page);
-            vaultItems.resize(vault.Width, vault.Height);
-            vaultItems.onStateUpdated += () =>
-            {
-                Items = new List<ItemJarWrapper>();
-                foreach (var itemJar in vaultItems.items)
-                {
-                    Items.Add(ItemJarWrapper.Create(itemJar));
-                }
-                UniTask.RunOnThreadPool(async () =>
-                    await Plugin.Inst.Database.VaultManager.UpdateAsync(player.CSteamID.m_SteamID, vault)).Forget(
-                    exception => Logger.LogError("[RFVault] [ERROR] VaultManager UpdateAsync: " + exception));
-            };
-            player.Player.inventory.updateItems(7, vaultItems);
-            player.Player.inventory.sendStorage();
-        }
     }
 }
