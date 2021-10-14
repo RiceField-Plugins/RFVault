@@ -55,6 +55,14 @@ namespace RFVault.Commands
                         Plugin.Conf.AnnouncerIconUrl));
                     return;
                 }
+
+                if (player.IsInVehicle)
+                {
+                    await ThreadTool.RunOnGameThreadAsync(() => ChatHelper.Say(context.Player,
+                        Plugin.Inst.Translate(EResponse.IN_VEHICLE.ToString()), Plugin.MsgColor,
+                        Plugin.Conf.AnnouncerIconUrl));
+                    return;
+                }
                 
                 await VaultUtil.OpenVaultAsync(player, pComponent.SelectedVault);
                 if (Plugin.Conf.DebugMode)

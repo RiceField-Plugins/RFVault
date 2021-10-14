@@ -51,17 +51,24 @@ namespace RFVault.Utils
 
         internal static async UniTask OpenVirtualTrashAsync(UnturnedPlayer player)
         {
-            var lockerItems = new Items(7);
+            var pComponent = player.GetPlayerComponent();
             await ThreadTool.RunOnGameThreadAsync(() =>
             {
+                if (player.Player.equipment.isEquipped || player.Player.equipment.isSelected)
+                    player.Player.equipment.dequip();
+                var lockerItems = new Items(7);
                 lockerItems.resize(Plugin.Conf.Trash.Width, Plugin.Conf.Trash.Height);
                 player.Player.inventory.updateItems(7, lockerItems);
+                pComponent.IsSubmitting = true;
                 player.Player.inventory.sendStorage();
             });
         }
 
         private static void LoadVault(UnturnedPlayer player, Vault vault)
         {
+            if (player.Player.equipment.isEquipped || player.Player.equipment.isSelected)
+                player.Player.equipment.dequip();
+            
             var vaultItems = new Items(7);
             vaultItems.resize(vault.Width, vault.Height);
 
@@ -70,7 +77,7 @@ namespace RFVault.Utils
                 vaultItems.addItem(itemJarWrapper.X, itemJarWrapper.Y, itemJarWrapper.Rotation,
                     itemJarWrapper.Item.ToItem());
 
-            vaultItems.onStateUpdated += () =>
+            vaultItems.onStateUpdated += () => 
             {
                 var itemJarWrappers = vaultItems.items.Select(ItemJarWrapper.Create).ToList();
                 loadedVault.VaultContent.Height = vault.Height;

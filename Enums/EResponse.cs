@@ -13,6 +13,7 @@ namespace RFVault.Enums
         MIGRATION_START,
         MIGRATION_FINISH,
         BLACKLIST,
-        NO_PERMISSION_ALL
+        NO_PERMISSION_ALL,
+        IN_VEHICLE
     }
 }

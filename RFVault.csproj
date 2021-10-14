@@ -42,6 +42,7 @@
         <Compile Include="Commands\SuperVaultCommand.cs" />
         <Compile Include="Commands\TrashCommand.cs" />
         <Compile Include="Configuration.cs" />
+        <Compile Include="Core\UniTaskSetup.cs" />
         <Compile Include="DatabaseManagers\DatabaseManager.cs" />
         <Compile Include="DatabaseManagers\DataStore.cs" />
         <Compile Include="DatabaseManagers\VaultManager.cs" />

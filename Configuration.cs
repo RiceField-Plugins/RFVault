@@ -15,8 +15,8 @@ namespace RFVault
         public string MessageColor;
         public string AnnouncerIconUrl;
         public Trash Trash;
-        [XmlArrayItem("Vault")] public List<Vault> Vaults;
-        [XmlArrayItem("Blacklist")] public List<Blacklist> BlacklistedItems;
+        public List<Vault> Vaults;
+        public List<Blacklist> BlacklistedItems;
 
         public void LoadDefaults()
         {
