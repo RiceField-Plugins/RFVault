@@ -10,5 +10,8 @@ namespace RFVault.API.Interfaces
         PlayerVault Get(ulong steamId, Vault vault);
         UniTask<bool> UpdateAsync(ulong steamId, Vault vault);
         UniTask MigrateAsync(EDatabase from, EDatabase to);
+#if DEBUG
+        UniTask MigrateLockerAsync(EDatabase to);
+#endif
     }
 }

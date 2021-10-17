@@ -10,9 +10,10 @@ using RocketExtensions.Utilities.ShimmyMySherbet.Extensions;
 
 namespace RFVault.Commands
 {
-    [RocketExtensions.Plugins.AllowedCaller(Rocket.API.AllowedCaller.Player)]
+    [AllowedCaller(Rocket.API.AllowedCaller.Player)]
     [CommandName("vaults")]
     [Permissions("vaults")]
+    [Aliases("lockers")]
     [CommandInfo("Get a list of available vaults.", "/vaults")]
     public class VaultsCommand : RocketCommand
     {

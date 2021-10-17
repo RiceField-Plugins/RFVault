@@ -16,6 +16,7 @@ namespace RFVault.Commands
     [AllowedCaller(Rocket.API.AllowedCaller.Player)]
     [CommandName("vault")]
     [Permissions("vault")]
+    [Aliases("locker")]
     [CommandInfo("Open a virtual vault storage.", "/vault | /vault <vaultName>")]
     public class VaultCommand : RocketCommand
     {

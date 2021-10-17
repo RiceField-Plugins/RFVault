@@ -14,7 +14,7 @@ namespace RFVault.Commands
     [RocketExtensions.Plugins.AllowedCaller(AllowedCaller.Player)]
     [CommandName("vaultset")]
     [Permissions("vaultset")]
-    [Aliases("vset")]
+    [Aliases("vset", "lset")]
     [CommandInfo("Set player default vault.", "/vaultset <vaultName>")]
     public class VaultSetCommand : RocketCommand
     {

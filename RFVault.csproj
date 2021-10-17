@@ -36,6 +36,7 @@
         <Compile Include="Commands\VaultCommand.cs" />
         <Compile Include="Commands\VaultCopyCommand.cs" />
         <Compile Include="Commands\VaultMigrateCommand.cs" />
+        <Compile Include="Commands\VaultMigrateLockerCommand.cs" />
         <Compile Include="Commands\VaultsCommand.cs" />
         <Compile Include="Commands\VaultSetCommand.cs" />
         <Compile Include="Commands\VaultTransferCommand.cs" />
