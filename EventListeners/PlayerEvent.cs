@@ -15,8 +15,8 @@ namespace RFVault.EventListeners
             var pComponent = player.GetPlayerComponent();
             if (!pComponent.IsSubmitting)
                 return;
-            player.Inventory.updateItems(7, new Items(7));
             pComponent.IsSubmitting = false;
+            player.Inventory.updateItems(7, new Items(7));
             if (Plugin.Conf.DebugMode)
                 Logger.LogWarning($"[RFVault] {player.CharacterName} is closing a vault");
         }

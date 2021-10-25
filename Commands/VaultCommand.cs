@@ -32,6 +32,15 @@ namespace RFVault.Commands
 
             var player = (UnturnedPlayer) context.Player;
             var pComponent = player.GetPlayerComponent();
+
+            if (player.IsInVehicle)
+            {
+                await ThreadTool.RunOnGameThreadAsync(() => ChatHelper.Say(context.Player,
+                    Plugin.Inst.Translate(EResponse.IN_VEHICLE.ToString()), Plugin.MsgColor,
+                    Plugin.Conf.AnnouncerIconUrl));
+                return;
+            }
+            
             if (context.CommandRawArguments.Length == 0)
             {
                 if (pComponent.SelectedVault == null)
@@ -53,14 +62,6 @@ namespace RFVault.Commands
                 {
                     await ThreadTool.RunOnGameThreadAsync(() => ChatHelper.Say(context.Player,
                         Plugin.Inst.Translate(EResponse.NO_PERMISSION.ToString(), pComponent.SelectedVault.Name), Plugin.MsgColor,
-                        Plugin.Conf.AnnouncerIconUrl));
-                    return;
-                }
-
-                if (player.IsInVehicle)
-                {
-                    await ThreadTool.RunOnGameThreadAsync(() => ChatHelper.Say(context.Player,
-                        Plugin.Inst.Translate(EResponse.IN_VEHICLE.ToString()), Plugin.MsgColor,
                         Plugin.Conf.AnnouncerIconUrl));
                     return;
                 }

@@ -37,10 +37,10 @@ namespace RFVault.Utils
         internal static async UniTask OpenVaultAsync(UnturnedPlayer player, Vault vault)
         {
             var pComponent = player.GetPlayerComponent();
+            pComponent.IsSubmitting = true;
             try
             {
                 await Plugin.Inst.Database.VaultManager.AddAsync(player.CSteamID.m_SteamID, vault);
-                pComponent.IsSubmitting = true;
                 await ThreadTool.RunOnGameThreadAsync(() => LoadVault(player, vault));
             }
             catch (Exception e)
@@ -52,6 +52,7 @@ namespace RFVault.Utils
         internal static async UniTask OpenVirtualTrashAsync(UnturnedPlayer player)
         {
             var pComponent = player.GetPlayerComponent();
+            pComponent.IsSubmitting = true;
             await ThreadTool.RunOnGameThreadAsync(() =>
             {
                 if (player.Player.equipment.isEquipped || player.Player.equipment.isSelected)
@@ -59,7 +60,6 @@ namespace RFVault.Utils
                 var lockerItems = new Items(7);
                 lockerItems.resize(Plugin.Conf.Trash.Width, Plugin.Conf.Trash.Height);
                 player.Player.inventory.updateItems(7, lockerItems);
-                pComponent.IsSubmitting = true;
                 player.Player.inventory.sendStorage();
             });
         }

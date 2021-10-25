@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using Cysharp.Threading.Tasks;
-using Dapper;
-using LiteDB.Async;
 using RFVault.API.Interfaces;
 using RFVault.Enums;
 using RFVault.Models;
@@ -102,7 +100,7 @@ namespace RFVault.DatabaseManagers
         private async UniTask<List<PlayerVault>> LiteDB_LoadAsync()
         {
             var result = new List<PlayerVault>();
-            using (var db = new LiteDatabaseAsync(DatabaseManager.LiteDB_ConnectionString))
+            using (var db = new LiteDB.Async.LiteDatabaseAsync(DatabaseManager.LiteDB_ConnectionString))
             {
                 var col = db.GetCollection<PlayerVault>(LiteDB_TableName);
                 var all = await col.FindAllAsync();
@@ -133,7 +131,7 @@ namespace RFVault.DatabaseManagers
         {
             using (var connection = new MySql.Data.MySqlClient.MySqlConnection(DatabaseManager.MySql_ConnectionString))
             {
-                await connection.ExecuteAsync($"CREATE TABLE IF NOT EXISTS `{tableName}` ({createTableQuery});");
+                await Dapper.SqlMapper.ExecuteAsync(connection, $"CREATE TABLE IF NOT EXISTS `{tableName}` ({createTableQuery});");
             }
         }
 
@@ -143,7 +141,7 @@ namespace RFVault.DatabaseManagers
             using (var connection = new MySql.Data.MySqlClient.MySqlConnection(DatabaseManager.MySql_ConnectionString))
             {
                 var loadQuery = $"SELECT * FROM `{MySql_TableName}`;";
-                var databases = await connection.QueryAsync(loadQuery);
+                var databases = await Dapper.SqlMapper.QueryAsync(connection, loadQuery);
                 result.AddRange(from database in databases.Cast<IDictionary<string, object>>()
                     let byteArray = database["VaultContent"].ToString().ToByteArray()
                     let vaultContent = byteArray.Deserialize<ItemsWrapper>()
@@ -193,7 +191,7 @@ namespace RFVault.DatabaseManagers
             switch (Plugin.Conf.Database)
             {
                 case EDatabase.LITEDB:
-                    using (var db = new LiteDatabaseAsync(DatabaseManager.LiteDB_ConnectionString))
+                    using (var db = new LiteDB.Async.LiteDatabaseAsync(DatabaseManager.LiteDB_ConnectionString))
                     {
                         var col = db.GetCollection<PlayerVault>(LiteDB_TableName);
                         await col.InsertAsync(playerVault);
@@ -213,12 +211,12 @@ namespace RFVault.DatabaseManagers
                         var insertQuery =
                             $"INSERT INTO `{MySql_TableName}` (Id, SteamId, VaultName, VaultContent) " +
                             "VALUES(@Id, @SteamId, @VaultName, @VaultContent)";
-                        var parameter = new DynamicParameters();
+                        var parameter = new Dapper.DynamicParameters();
                         parameter.Add("@Id", playerVault.Id, DbType.Int32, ParameterDirection.Input);
                         parameter.Add("@SteamId", steamId, DbType.String, ParameterDirection.Input);
                         parameter.Add("@VaultName", playerVault.VaultName, DbType.String, ParameterDirection.Input);
                         parameter.Add("@VaultContent", vaultContent, DbType.String, ParameterDirection.Input);
-                        await connection.ExecuteAsync(insertQuery, parameter);
+                        await Dapper.SqlMapper.ExecuteAsync(connection, insertQuery, parameter);
                     }
 
                     break;
@@ -241,7 +239,7 @@ namespace RFVault.DatabaseManagers
             switch (Plugin.Conf.Database)
             {
                 case EDatabase.LITEDB:
-                    using (var db = new LiteDatabaseAsync(DatabaseManager.LiteDB_ConnectionString))
+                    using (var db = new LiteDB.Async.LiteDatabaseAsync(DatabaseManager.LiteDB_ConnectionString))
                     {
                         var col = db.GetCollection<PlayerVault>(LiteDB_TableName);
                         return await col.UpdateAsync(playerVault);
@@ -255,13 +253,13 @@ namespace RFVault.DatabaseManagers
                     {
                         var serialized = playerVault.VaultContent.Serialize();
                         var vaultContent = serialized.ToBase64();
-                        var parameter = new DynamicParameters();
+                        var parameter = new Dapper.DynamicParameters();
                         parameter.Add("@SteamId", steamId, DbType.String, ParameterDirection.Input);
                         parameter.Add("@VaultName", playerVault.VaultName, DbType.String, ParameterDirection.Input);
                         parameter.Add("@VaultContent", vaultContent, DbType.String, ParameterDirection.Input);
                         var updateQuery =
                             $"UPDATE {MySql_TableName} SET VaultContent = @VaultContent WHERE SteamId = @SteamId AND VaultName = @VaultName;";
-                        result = await connection.ExecuteAsync(updateQuery, parameter);
+                        result = await Dapper.SqlMapper.ExecuteAsync(connection, updateQuery, parameter);
                     }
 
                     return result == 1;
@@ -286,13 +284,13 @@ namespace RFVault.DatabaseManagers
                                 new MySql.Data.MySqlClient.MySqlConnection(DatabaseManager.MySql_ConnectionString))
                             {
                                 var deleteQuery = $"DELETE FROM {MySql_TableName};";
-                                await connection.ExecuteAsync(deleteQuery);
+                                await Dapper.SqlMapper.ExecuteAsync(connection, deleteQuery);
 
                                 foreach (var playerVault in Collection)
                                 {
                                     var serialized = playerVault.VaultContent.Serialize();
                                     var vaultContent = serialized.ToBase64();
-                                    var parameter = new DynamicParameters();
+                                    var parameter = new Dapper.DynamicParameters();
                                     parameter.Add("@Id", playerVault.Id, DbType.Int32, ParameterDirection.Input);
                                     parameter.Add("@SteamId", playerVault.SteamId, DbType.String,
                                         ParameterDirection.Input);
@@ -303,7 +301,7 @@ namespace RFVault.DatabaseManagers
                                     var insertQuery =
                                         $"INSERT INTO `{MySql_TableName}` (Id, SteamId, VaultName, VaultContent) " +
                                         "VALUES(@Id, @SteamId, @VaultName, @VaultContent);";
-                                    await connection.ExecuteAsync(insertQuery, parameter);
+                                    await Dapper.SqlMapper.ExecuteAsync(connection, insertQuery, parameter);
                                 }
                             }
 
@@ -318,7 +316,7 @@ namespace RFVault.DatabaseManagers
                     switch (to)
                     {
                         case EDatabase.LITEDB:
-                            using (var db = new LiteDatabaseAsync(DatabaseManager.LiteDB_ConnectionString))
+                            using (var db = new LiteDB.Async.LiteDatabaseAsync(DatabaseManager.LiteDB_ConnectionString))
                             {
                                 var col = db.GetCollection<PlayerVault>(LiteDB_TableName);
                                 await col.DeleteAllAsync();
@@ -331,13 +329,13 @@ namespace RFVault.DatabaseManagers
                                 new MySql.Data.MySqlClient.MySqlConnection(DatabaseManager.MySql_ConnectionString))
                             {
                                 var deleteQuery = $"DELETE FROM {MySql_TableName};";
-                                await connection.ExecuteAsync(deleteQuery);
+                                await Dapper.SqlMapper.ExecuteAsync(connection, deleteQuery);
 
                                 foreach (var playerVault in Collection)
                                 {
                                     var serialized = playerVault.VaultContent.Serialize();
                                     var vaultContent = serialized.ToBase64();
-                                    var parameter = new DynamicParameters();
+                                    var parameter = new Dapper.DynamicParameters();
                                     parameter.Add("@Id", playerVault.Id, DbType.Int32, ParameterDirection.Input);
                                     parameter.Add("@SteamId", playerVault.SteamId, DbType.String,
                                         ParameterDirection.Input);
@@ -348,7 +346,7 @@ namespace RFVault.DatabaseManagers
                                     var insertQuery =
                                         $"INSERT INTO `{MySql_TableName}` (Id, SteamId, VaultName, VaultContent) " +
                                         "VALUES(@Id, @SteamId, @VaultName, @VaultContent);";
-                                    await connection.ExecuteAsync(insertQuery, parameter);
+                                    await Dapper.SqlMapper.ExecuteAsync(connection, insertQuery, parameter);
                                 }
                             }
 
@@ -363,7 +361,7 @@ namespace RFVault.DatabaseManagers
                     switch (to)
                     {
                         case EDatabase.LITEDB:
-                            using (var db = new LiteDatabaseAsync(DatabaseManager.LiteDB_ConnectionString))
+                            using (var db = new LiteDB.Async.LiteDatabaseAsync(DatabaseManager.LiteDB_ConnectionString))
                             {
                                 var col = db.GetCollection<PlayerVault>(LiteDB_TableName);
                                 await col.DeleteAllAsync();
