@@ -43,18 +43,13 @@
         <Compile Include="Commands\SuperVaultCommand.cs" />
         <Compile Include="Commands\TrashCommand.cs" />
         <Compile Include="Configuration.cs" />
-        <Compile Include="Core\UniTaskSetup.cs" />
         <Compile Include="DatabaseManagers\DatabaseManager.cs" />
-        <Compile Include="DatabaseManagers\DataStore.cs" />
         <Compile Include="DatabaseManagers\VaultManager.cs" />
         <Compile Include="Enums\EDatabase.cs" />
         <Compile Include="Enums\EResponse.cs" />
         <Compile Include="EventListeners\PlayerEvent.cs" />
         <Compile Include="Helpers\ChatHelper.cs" />
         <Compile Include="Models\Blacklist.cs" />
-        <Compile Include="Models\ItemJarWrapper.cs" />
-        <Compile Include="Models\ItemsWrapper.cs" />
-        <Compile Include="Models\ItemWrapper.cs" />
         <Compile Include="Models\PlayerVault.cs" />
         <Compile Include="Models\Trash.cs" />
         <Compile Include="Models\Vault.cs" />
@@ -92,11 +87,15 @@
       <Reference Include="litedbasync, Version=0.0.11.0, Culture=neutral, PublicKeyToken=null">
         <HintPath>..\..\..\Libraries\LiteDB\litedbasync.dll</HintPath>
       </Reference>
+      <Reference Include="Microsoft.CSharp" />
       <Reference Include="MySql.Data, Version=8.0.25.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d">
         <HintPath>..\..\..\Libraries\Dapper\MySql.Data.8.0.25.dll</HintPath>
       </Reference>
       <Reference Include="Newtonsoft.Json, Version=7.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed">
         <HintPath>..\..\..\Libraries\RocketMod\Newtonsoft.Json.dll</HintPath>
+      </Reference>
+      <Reference Include="RFRocketLibrary, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+        <HintPath>..\..\..\Libraries\RiceField\RFRocketLibrary.dll</HintPath>
       </Reference>
       <Reference Include="Rocket.API, Version=4.9.3.4, Culture=neutral, PublicKeyToken=null">
         <HintPath>..\..\..\Libraries\RocketMod\Rocket.API.dll</HintPath>
@@ -107,9 +106,6 @@
       <Reference Include="Rocket.Unturned, Version=4.9.3.13, Culture=neutral, PublicKeyToken=null">
         <HintPath>..\..\..\Libraries\RocketMod\Rocket.Unturned.dll</HintPath>
       </Reference>
-      <Reference Include="RocketExtensions, Version=1.1.0.0, Culture=neutral, PublicKeyToken=null">
-        <HintPath>..\..\..\Libraries\UniTask\RocketExtensions.dll</HintPath>
-      </Reference>
       <Reference Include="SDG.NetTransport, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
         <HintPath>..\..\..\Libraries\RocketMod\SDG.NetTransport.dll</HintPath>
       </Reference>
@@ -119,12 +115,6 @@
       <Reference Include="System" />
       <Reference Include="System.Data" />
       <Reference Include="System.Xml" />
-      <Reference Include="UniTask, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
-        <HintPath>..\..\..\Libraries\UniTask\UniTask.dll</HintPath>
-      </Reference>
-      <Reference Include="UniTask.Linq, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
-        <HintPath>..\..\..\Libraries\UniTask\UniTask.Linq.dll</HintPath>
-      </Reference>
       <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
         <HintPath>..\..\..\Libraries\RocketMod\UnityEngine.dll</HintPath>
       </Reference>

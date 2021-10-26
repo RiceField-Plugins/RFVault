@@ -1,9 +1,8 @@
 using System;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
+using RFRocketLibrary.Plugins;
 using RFVault.DatabaseManagers;
 using RFVault.Enums;
-using RocketExtensions.Models;
-using RocketExtensions.Plugins;
 
 namespace RFVault.Commands
 {
@@ -14,7 +13,7 @@ namespace RFVault.Commands
         Help: "Migrate vault database from one to another.")]
     public class VaultMigrateCommand : RocketCommand
     {
-        public override async UniTask Execute(CommandContext context)
+        public override async Task ExecuteAsync(CommandContext context)
         {
             if (context.CommandRawArguments.Length != 2)
             {

@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Xml.Serialization;
 using RFVault.Enums;
 using RFVault.Models;
 using Rocket.API;

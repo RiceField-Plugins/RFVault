@@ -1,5 +1,7 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using Rocket.Core.Logging;
 
 namespace RFVault.Utils
 {
@@ -7,17 +9,36 @@ namespace RFVault.Utils
     {
         public static byte[] Serialize<T>(this T m)
         {
-            using (var ms = new MemoryStream())
+            try
             {
-                new BinaryFormatter().Serialize(ms, m);
-                return ms.ToArray();
+                using (var ms = new MemoryStream())
+                {
+                    new BinaryFormatter().Serialize(ms, m);
+                    return ms.ToArray();
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] ByteArrayExtensions Serialize: " + e.Message);
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: " + (e.InnerException ?? e));
+                return Array.Empty<byte>();
             }
         }
+
         public static T Deserialize<T>(this byte[] byteArray)
         {
-            using (var ms = new MemoryStream(byteArray))
+            try
             {
-                return (T)new BinaryFormatter().Deserialize(ms);
+                using (var ms = new MemoryStream(byteArray))
+                {
+                    return (T) new BinaryFormatter().Deserialize(ms);
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] ByteArrayExtensions Deserialize: " + e.Message);
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: " + (e.InnerException ?? e));
+                return default;
             }
         }
     }

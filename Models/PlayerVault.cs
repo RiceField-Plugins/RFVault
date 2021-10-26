@@ -1,4 +1,5 @@
 using System;
+using RFRocketLibrary.Models;
 
 namespace RFVault.Models
 {

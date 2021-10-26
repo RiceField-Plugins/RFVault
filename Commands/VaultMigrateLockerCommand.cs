@@ -15,7 +15,7 @@ namespace RFVault.Commands
         Help: "Migrate locker database from RFLocker to RFVault.")]
     public class VaultMigrateLockerCommand : RocketCommand
     {
-        public override async UniTask Execute(CommandContext context)
+        public override async Task Execute(CommandContext context)
         {
             if (context.CommandRawArguments.Length != 1)
             {

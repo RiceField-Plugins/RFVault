@@ -1,5 +1,4 @@
 ﻿using HarmonyLib;
-using RFVault.Core;
 using RFVault.DatabaseManagers;
 using RFVault.Enums;
 using RFVault.EventListeners;
@@ -15,6 +14,10 @@ namespace RFVault
 {
     public class Plugin : RocketPlugin<Configuration>
     {
+        private const int Major = 1;
+        private const int Minor = 1;
+        private const int Patch = 0;
+        
         public static Plugin Inst;
         public static Configuration Conf;
         internal static Color MsgColor;
@@ -28,20 +31,19 @@ namespace RFVault
             if (Conf.Enabled)
             {
                 MsgColor = UnturnedChat.GetColorFromName(Conf.MessageColor, Color.green);
-                UniTaskSetup.CheckInit();
                 Database = new DatabaseManager();
 
-                m_Harmony = new Harmony("RFVault.Patches");
+                m_Harmony = new Harmony($"{Name}.Patches");
                 m_Harmony.PatchAll();
 
                 UnturnedPlayerEvents.OnPlayerUpdateGesture += PlayerEvent.OnGesture;
                 ItemManager.onTakeItemRequested += PlayerEvent.OnTakeItem;
             }
             else
-                Logger.LogError($"[{Name}] RFVault: DISABLED");
+                Logger.LogError($"[{Name}] Plugin: DISABLED");
 
             Logger.LogWarning($"[{Name}] Plugin loaded successfully!");
-            Logger.LogWarning($"[{Name}] {Name} v1.0.0");
+            Logger.LogWarning($"[{Name}] {Name} v{Major}.{Minor}.{Patch}");
             Logger.LogWarning($"[{Name}] Made with 'rice' by RiceField Plugins!");
         }
 
@@ -70,6 +72,7 @@ namespace RFVault
             {$"{EResponse.NO_PERMISSION_ALL}", "[RFVault] You don't have permission to access any Vault!"},
             {$"{EResponse.VAULT_NOT_FOUND}", "[RFVault] Vault not found!"},
             {$"{EResponse.VAULT_NOT_SELECTED}", "[RFVault] Please set default Vault first! /vset <vaultName> or /vault <vaultName>"},
+            {$"{EResponse.VAULT_PROCESSING}", "[RFVault] Processing vault. Please wait..."},
             {$"{EResponse.VAULTS}", "[RFVault] Available Vaults: {0}"},
             {$"{EResponse.VAULTSET}", "[RFVault] Successfully set {0} Vault as default Vault!"},
             {$"{EResponse.SAME_DATABASE}", "[RFVault] You can't run migrate to the same database!"},
