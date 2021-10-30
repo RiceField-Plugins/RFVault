@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
-using LiteDB;
 using RFRocketLibrary.Models;
 using RFRocketLibrary.Storages;
-using RFVault.API.Interfaces;
+using RFRocketLibrary.Utils;
 using RFVault.Enums;
 using RFVault.Models;
 using RFVault.Utils;
@@ -19,19 +18,20 @@ using Extensions = RFLocker.Utils.Extensions;
 
 namespace RFVault.DatabaseManagers
 {
-    internal class VaultManager : IVaultManager
+    internal class VaultManager
     {
         internal static bool Ready { get; set; }
-        internal List<PlayerVault> Json_Collection { get; set; } = new List<PlayerVault>();
+        private List<PlayerVault> Json_Collection { get; set; } = new List<PlayerVault>();
+        private List<PlayerVault> MigrateCollection { get; set; } = new List<PlayerVault>();
 
-        private static readonly string LiteDB_TableName = "vault";
+        private const string LiteDB_TableName = "vault";
 
-        private static readonly string Json_FileName = "vault.json";
-        private DataStore<List<PlayerVault>> Json_DataStore { get; set; }
+        private const string Json_FileName = "vault.json";
+        private DataStore<List<PlayerVault>> Json_DataStore { get; }
 
-        private static readonly string MySql_TableName = "rfvault";
+        private const string MySql_TableName = "rfvault";
 
-        private static readonly string MySql_CreateTableQuery =
+        private const string MySql_CreateTableQuery =
             "`Id` INT NOT NULL AUTO_INCREMENT, " +
             "`SteamId` VARCHAR(32) NOT NULL DEFAULT '0', " +
             "`VaultName` VARCHAR(255) NOT NULL DEFAULT 'N/A', " +
@@ -43,47 +43,25 @@ namespace RFVault.DatabaseManagers
         {
             try
             {
-                if (Plugin.Conf.Database == EDatabase.JSON)
+                switch (Plugin.Conf.Database)
                 {
-                    Json_DataStore = new DataStore<List<PlayerVault>>(Plugin.Inst.Directory, Json_FileName);
-                    JSON_Reload();
+                    case EDatabase.JSON:
+                        Json_DataStore = new DataStore<List<PlayerVault>>(Plugin.Inst.Directory, Json_FileName);
+                        JSON_Reload();
+                        break;
+                    case EDatabase.MYSQL:
+                        MySQL_CreateTable(MySql_TableName, MySql_CreateTableQuery);
+                        break;
                 }
 
                 Ready = true;
             }
             catch (Exception e)
             {
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultManager Initializing: " + e.Message);
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: " + (e.InnerException ?? e));
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultManager Initializing: {e.Message}");
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: {e}");
             }
         }
-
-        async Task<int> IVaultManager.AddAsync(ulong steamId, Vault vault)
-        {
-            return await AddAsync(steamId, vault);
-        }
-
-        PlayerVault IVaultManager.Get(ulong steamId, Vault vault)
-        {
-            return Get(steamId, vault);
-        }
-
-        async Task<bool> IVaultManager.UpdateAsync(ulong steamId, Vault vault)
-        {
-            return await UpdateAsync(steamId, vault);
-        }
-
-        async Task IVaultManager.MigrateAsync(EDatabase from, EDatabase to)
-        {
-            await MigrateAsync(from, to);
-        }
-
-#if DEBUG
-        async Task IVaultManager.MigrateLockerAsync(EDatabase to)
-        {
-            await MigrateLockerAsync(to);
-        }
-#endif
 
         private int Json_NewId()
         {
@@ -98,7 +76,45 @@ namespace RFVault.DatabaseManagers
             }
         }
 
-        private async Task<List<PlayerVault>> LiteDB_LoadAsync()
+        private void JSON_Reload(bool migrate = false)
+        {
+            try
+            {
+                if (migrate)
+                {
+                    MigrateCollection = Json_DataStore.Load() ?? new List<PlayerVault>();
+                    return;
+                }
+
+                Json_Collection = Json_DataStore.Load() ?? new List<PlayerVault>();
+                Json_DataStore.Save(Json_Collection);
+            }
+            catch (Exception e)
+            {
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultManager JSON_Reload: {e.Message}");
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: {e}");
+            }
+        }
+
+        private void MySQL_CreateTable(string tableName, string createTableQuery)
+        {
+            try
+            {
+                using (var connection =
+                    new MySql.Data.MySqlClient.MySqlConnection(DatabaseManager.MySql_ConnectionString))
+                {
+                    Dapper.SqlMapper.Execute(connection,
+                        $"CREATE TABLE IF NOT EXISTS `{tableName}` ({createTableQuery});");
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultManager MySQL_CreateTable: {e.Message}");
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: {e}");
+            }
+        }
+
+        private async Task<List<PlayerVault>> LiteDB_LoadAllAsync()
         {
             try
             {
@@ -114,64 +130,13 @@ namespace RFVault.DatabaseManagers
             }
             catch (Exception e)
             {
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultManager LiteDB_LoadAsync: " + e.Message);
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: " + (e.InnerException ?? e));
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultManager LiteDB_LoadAllAsync: {e.Message}");
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: {e}");
                 return new List<PlayerVault>();
             }
         }
 
-        private async Task LiteDB_ReloadAsync()
-        {
-            try
-            {
-                Json_Collection = await LiteDB_LoadAsync();
-                if (Json_Collection != null)
-                    return;
-                Json_Collection = new List<PlayerVault>();
-            }
-            catch (Exception e)
-            {
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultManager LiteDB_ReloadAsync: " + e.Message);
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: " + (e.InnerException ?? e));
-            }
-        }
-
-        private void JSON_Reload()
-        {
-            try
-            {
-                Json_Collection = Json_DataStore.Load();
-                if (Json_Collection != null)
-                    return;
-                Json_Collection = new List<PlayerVault>();
-                Json_DataStore.Save(Json_Collection);
-            }
-            catch (Exception e)
-            {
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultManager JSON_Reload: " + e.Message);
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: " + (e.InnerException ?? e));
-            }
-        }
-
-        private async Task MySQL_CreateTableAsync(string tableName, string createTableQuery)
-        {
-            try
-            {
-                using (var connection =
-                    new MySql.Data.MySqlClient.MySqlConnection(DatabaseManager.MySql_ConnectionString))
-                {
-                    await Dapper.SqlMapper.ExecuteAsync(connection,
-                        $"CREATE TABLE IF NOT EXISTS `{tableName}` ({createTableQuery});");
-                }
-            }
-            catch (Exception e)
-            {
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultManager MySQL_CreateTableAsync: " + e.Message);
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: " + (e.InnerException ?? e));
-            }
-        }
-
-        private async Task<List<PlayerVault>> MySQL_LoadAsync()
+        private async Task<List<PlayerVault>> MySQL_LoadAllAsync()
         {
             try
             {
@@ -198,30 +163,13 @@ namespace RFVault.DatabaseManagers
             }
             catch (Exception e)
             {
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultManager MySQL_LoadAsync: " + e.Message);
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: " + (e.InnerException ?? e));
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultManager MySQL_LoadAllAsync: {e.Message}");
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: {e}");
                 return new List<PlayerVault>();
             }
         }
 
-        private async Task MySQL_ReloadAsync()
-        {
-            try
-            {
-                await MySQL_CreateTableAsync(MySql_TableName, MySql_CreateTableQuery);
-                Json_Collection = await MySQL_LoadAsync();
-                if (Json_Collection != null)
-                    return;
-                Json_Collection = new List<PlayerVault>();
-            }
-            catch (Exception e)
-            {
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultManager MySQL_ReloadAsync: " + e.Message);
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: " + (e.InnerException ?? e));
-            }
-        }
-
-        private async Task<int> AddAsync(ulong steamId, Vault vault)
+        internal async Task AddAsync(ulong steamId, Vault vault)
         {
             try
             {
@@ -238,7 +186,6 @@ namespace RFVault.DatabaseManagers
                     },
                     LastUpdated = DateTime.Now
                 };
-                var result = -1;
                 PlayerVault existingVault;
                 switch (Plugin.Conf.Database)
                 {
@@ -248,21 +195,18 @@ namespace RFVault.DatabaseManagers
                             var col = db.GetCollection<PlayerVault>(LiteDB_TableName);
                             existingVault =
                                 await col.FindOneAsync(x => x.SteamId == steamId && x.VaultName == vault.Name);
-                            if (existingVault != null)
-                                return -1;
-                            result = await col.InsertAsync(playerVault);
+                            if (existingVault != null) return;
+                            await col.InsertAsync(playerVault);
                             await col.EnsureIndexAsync(x => x.SteamId);
                         }
 
                         break;
                     case EDatabase.JSON:
                         existingVault = Json_Collection.Find(x => x.SteamId == steamId && x.VaultName == vault.Name);
-                        if (existingVault != null)
-                            return -1;
+                        if (existingVault != null) return;
                         playerVault.Id = Json_NewId();
                         Json_Collection.Add(playerVault);
                         await Json_DataStore.SaveAsync(Json_Collection);
-                        result = playerVault.Id;
                         break;
                     case EDatabase.MYSQL:
                         using (var connection =
@@ -271,8 +215,7 @@ namespace RFVault.DatabaseManagers
                             var existing = await Dapper.SqlMapper.QueryAsync<object>(connection,
                                 $"SELECT 1 WHERE EXISTS (SELECT 1 FROM {MySql_TableName} WHERE SteamId = @SteamId AND VaultName = @VaultName)",
                                 new {SteamId = steamId, VaultName = vault.Name});
-                            if (existing.Any())
-                                return -1;
+                            if (existing.Any()) return;
 
                             var serialized = playerVault.VaultContent.Serialize();
                             var vaultContent = serialized.ToBase64();
@@ -283,36 +226,33 @@ namespace RFVault.DatabaseManagers
                             parameter.Add("@SteamId", steamId, DbType.String, ParameterDirection.Input);
                             parameter.Add("@VaultName", playerVault.VaultName, DbType.String, ParameterDirection.Input);
                             parameter.Add("@VaultContent", vaultContent, DbType.String, ParameterDirection.Input);
-                            result = await Dapper.SqlMapper.ExecuteScalarAsync<int>(connection, insertQuery, parameter);
+                            await Dapper.SqlMapper.ExecuteScalarAsync<int>(connection, insertQuery, parameter);
                         }
 
                         break;
                 }
-
-                return result;
             }
             catch (Exception e)
             {
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultManager AddAsync: " + e.Message);
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: " + (e.InnerException ?? e));
-                return -1;
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultManager AddAsync: {e.Message}");
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: {e}");
             }
         }
 
-        private PlayerVault Get(ulong steamId, Vault vault)
+        internal PlayerVault Get(ulong steamId, Vault vault)
         {
             try
             {
                 switch (Plugin.Conf.Database)
                 {
-                    case EDatabase.LITEDB:
-                        using (var db = new LiteDatabase(DatabaseManager.LiteDB_ConnectionString))
-                        {
-                            var col = db.GetCollection<PlayerVault>();
-                            return col.FindOne(x => x.SteamId == steamId && vault.Name == x.VaultName);
-                        }
                     case EDatabase.JSON:
                         return Json_Collection.Find(x => x.SteamId == steamId && x.VaultName == vault.Name);
+                    case EDatabase.LITEDB:
+                        using (var db = new LiteDB.LiteDatabase(DatabaseManager.LiteDB_ConnectionString))
+                        {
+                            var col = db.GetCollection<PlayerVault>(LiteDB_TableName);
+                            return col.FindOne(x => x.SteamId == steamId && vault.Name == x.VaultName);
+                        }
                     case EDatabase.MYSQL:
                         using (var connection =
                             new MySql.Data.MySqlClient.MySqlConnection(DatabaseManager.MySql_ConnectionString))
@@ -322,8 +262,9 @@ namespace RFVault.DatabaseManagers
                             parameter.Add("@VaultName", vault.Name, DbType.String, ParameterDirection.Input);
                             var query =
                                 $"SELECT * FROM `{MySql_TableName}` WHERE SteamId = @SteamId AND VaultName = @VaultName;";
-                            var database = Dapper.SqlMapper.QueryFirstOrDefault(connection, query)
+                            var databases = Dapper.SqlMapper.Query(connection, query, parameter)
                                 .Cast<IDictionary<string, object>>();
+                            var database = databases.First();
                             var byteArray = database["VaultContent"].ToString().ToByteArray();
                             var vaultContent = byteArray.Deserialize<ItemsWrapper>();
                             return new PlayerVault
@@ -341,13 +282,13 @@ namespace RFVault.DatabaseManagers
             }
             catch (Exception e)
             {
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultManager AddAsync: " + e.Message);
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: " + (e.InnerException ?? e));
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultManager Get: {e.Message}");
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: {e}");
                 return null;
             }
         }
 
-        private async Task<bool> UpdateAsync(ulong steamId, Vault vault)
+        internal async Task<bool> UpdateAsync(ulong steamId, Vault vault)
         {
             try
             {
@@ -391,24 +332,24 @@ namespace RFVault.DatabaseManagers
             }
             catch (Exception e)
             {
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultManager UpdateAsync: " + e.Message);
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: " + (e.InnerException ?? e));
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultManager UpdateAsync: {e.Message}");
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: {e}");
                 return false;
             }
         }
 
-        private async Task MigrateAsync(EDatabase from, EDatabase to)
+        internal async Task MigrateAsync(EDatabase from, EDatabase to)
         {
             try
             {
                 switch (from)
                 {
                     case EDatabase.LITEDB:
-                        await LiteDB_ReloadAsync();
+                        MigrateCollection = await LiteDB_LoadAllAsync();
                         switch (to)
                         {
                             case EDatabase.JSON:
-                                await Json_DataStore.SaveAsync(Json_Collection);
+                                await Json_DataStore.SaveAsync(MigrateCollection);
                                 break;
                             case EDatabase.MYSQL:
                                 using (var connection =
@@ -417,7 +358,7 @@ namespace RFVault.DatabaseManagers
                                     var deleteQuery = $"DELETE FROM {MySql_TableName};";
                                     await Dapper.SqlMapper.ExecuteAsync(connection, deleteQuery);
 
-                                    foreach (var playerVault in Json_Collection)
+                                    foreach (var playerVault in MigrateCollection)
                                     {
                                         var serialized = playerVault.VaultContent.Serialize();
                                         var vaultContent = serialized.ToBase64();
@@ -443,7 +384,7 @@ namespace RFVault.DatabaseManagers
 
                         break;
                     case EDatabase.JSON:
-                        JSON_Reload();
+                        JSON_Reload(true);
                         switch (to)
                         {
                             case EDatabase.LITEDB:
@@ -452,7 +393,7 @@ namespace RFVault.DatabaseManagers
                                 {
                                     var col = db.GetCollection<PlayerVault>(LiteDB_TableName);
                                     await col.DeleteAllAsync();
-                                    await col.InsertBulkAsync(Json_Collection);
+                                    await col.InsertBulkAsync(MigrateCollection);
                                 }
 
                                 break;
@@ -463,7 +404,7 @@ namespace RFVault.DatabaseManagers
                                     var deleteQuery = $"DELETE FROM {MySql_TableName};";
                                     await Dapper.SqlMapper.ExecuteAsync(connection, deleteQuery);
 
-                                    foreach (var playerVault in Json_Collection)
+                                    foreach (var playerVault in MigrateCollection)
                                     {
                                         var serialized = playerVault.VaultContent.Serialize();
                                         var vaultContent = serialized.ToBase64();
@@ -489,7 +430,7 @@ namespace RFVault.DatabaseManagers
 
                         break;
                     case EDatabase.MYSQL:
-                        await MySQL_ReloadAsync();
+                        MigrateCollection = await MySQL_LoadAllAsync();
                         switch (to)
                         {
                             case EDatabase.LITEDB:
@@ -498,12 +439,12 @@ namespace RFVault.DatabaseManagers
                                 {
                                     var col = db.GetCollection<PlayerVault>(LiteDB_TableName);
                                     await col.DeleteAllAsync();
-                                    await col.InsertBulkAsync(Json_Collection);
+                                    await col.InsertBulkAsync(MigrateCollection);
                                 }
 
                                 break;
                             case EDatabase.JSON:
-                                await Json_DataStore.SaveAsync(Json_Collection);
+                                await Json_DataStore.SaveAsync(MigrateCollection);
                                 break;
                             default:
                                 throw new ArgumentOutOfRangeException(nameof(to), to, null);
@@ -513,11 +454,14 @@ namespace RFVault.DatabaseManagers
                     default:
                         throw new ArgumentOutOfRangeException(nameof(from), from, null);
                 }
+
+                MigrateCollection.Clear();
+                MigrateCollection.TrimExcess();
             }
             catch (Exception e)
             {
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultManager MigrateAsync: " + e.Message);
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: " + (e.InnerException ?? e));
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultManager MigrateAsync: {e.Message}");
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: {e}");
             }
         }
 #if DEBUG
@@ -548,7 +492,7 @@ namespace RFVault.DatabaseManagers
 
         private async Task MySQLLocker_ReloadAsync()
         {
-            await MySQL_CreateTableAsync(MySql_TableName, MySql_CreateTableQuery);
+            await MySQL_CreateTable(MySql_TableName, MySql_CreateTableQuery);
             RFLocker.Plugin.DbManager.ReadLocker();
             Json_Collection = MySQLLocker_LoadAsync();
             if (Json_Collection != null)

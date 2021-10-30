@@ -1,12 +1,10 @@
-﻿using HarmonyLib;
+﻿using RFRocketLibrary.Events;
 using RFVault.DatabaseManagers;
 using RFVault.Enums;
 using RFVault.EventListeners;
 using Rocket.API.Collections;
 using Rocket.Core.Plugins;
 using Rocket.Unturned.Chat;
-using Rocket.Unturned.Events;
-using SDG.Unturned;
 using UnityEngine;
 using Logger = Rocket.Core.Logging.Logger;
 
@@ -22,7 +20,6 @@ namespace RFVault
         public static Configuration Conf;
         internal static Color MsgColor;
         internal DatabaseManager Database;
-        private static Harmony m_Harmony;
 
         protected override void Load()
         {
@@ -32,12 +29,14 @@ namespace RFVault
             {
                 MsgColor = UnturnedChat.GetColorFromName(Conf.MessageColor, Color.green);
                 Database = new DatabaseManager();
-
-                m_Harmony = new Harmony($"{Name}.Patches");
-                m_Harmony.PatchAll();
-
-                UnturnedPlayerEvents.OnPlayerUpdateGesture += PlayerEvent.OnGesture;
-                ItemManager.onTakeItemRequested += PlayerEvent.OnTakeItem;
+                
+                //Load RFRocketLibrary Events
+                EventBus.Load();
+                UnturnedEvent.OnPlayerChangedEquipment += PlayerEvent.OnEquipmentChanged;
+                UnturnedEvent.OnPlayerChangedGesture += PlayerEvent.OnGestureChanged;
+                UnturnedEvent.OnPrePlayerTookItem += PlayerEvent.OnPreItemTook;
+                UnturnedEvent.OnPrePlayerDraggedItem += PlayerEvent.OnPreItemDragged;
+                UnturnedEvent.OnPrePlayerSwappedItem += PlayerEvent.OnPreItemSwapped;
             }
             else
                 Logger.LogError($"[{Name}] Plugin: DISABLED");
@@ -51,10 +50,11 @@ namespace RFVault
         {
             if (Conf.Enabled)
             {
-                m_Harmony.UnpatchAll(m_Harmony.Id);
-
-                UnturnedPlayerEvents.OnPlayerUpdateGesture -= PlayerEvent.OnGesture;
-                ItemManager.onTakeItemRequested -= PlayerEvent.OnTakeItem;
+                UnturnedEvent.OnPlayerChangedEquipment -= PlayerEvent.OnEquipmentChanged;
+                UnturnedEvent.OnPlayerChangedGesture -= PlayerEvent.OnGestureChanged;
+                UnturnedEvent.OnPrePlayerTookItem -= PlayerEvent.OnPreItemTook;
+                UnturnedEvent.OnPrePlayerDraggedItem -= PlayerEvent.OnPreItemDragged;
+                UnturnedEvent.OnPrePlayerSwappedItem -= PlayerEvent.OnPreItemSwapped;
             }
 
             Inst = null;

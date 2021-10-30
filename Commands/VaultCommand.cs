@@ -6,7 +6,6 @@ using RFVault.Helpers;
 using RFVault.Models;
 using RFVault.Utils;
 using Rocket.API;
-using Rocket.Core.Logging;
 using Rocket.Unturned.Player;
 using AllowedCaller = RFRocketLibrary.Plugins.AllowedCaller;
 
@@ -68,9 +67,6 @@ namespace RFVault.Commands
                 }
 
                 await VaultUtil.OpenVaultAsync(player, pComponent.SelectedVault);
-                if (Plugin.Conf.DebugMode)
-                    Logger.LogWarning(
-                        $"[RFVault] [DEBUG] {player.CharacterName} is accessing {pComponent.SelectedVault.Name} Vault");
             }
 
             if (context.CommandRawArguments.Length == 1)
@@ -101,9 +97,6 @@ namespace RFVault.Commands
                 }
 
                 await VaultUtil.OpenVaultAsync(player, vault);
-                if (Plugin.Conf.DebugMode)
-                    Logger.LogWarning(
-                        $"[RFVault] {player.CharacterName} is accessing {vault.Name} Vault");
             }
         }
     }

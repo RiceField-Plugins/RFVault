@@ -24,8 +24,8 @@ namespace RFVault.Utils
             }
             catch (Exception e)
             {
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultUtil GetVaults: " + e.Message);
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: " + (e.InnerException ?? e));
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultUtil GetVaults: {e.Message}");
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: {e}");
                 return new List<Vault>();
             }
         }
@@ -48,8 +48,8 @@ namespace RFVault.Utils
             }
             catch (Exception e)
             {
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultUtil IsBlacklisted: " + e.Message);
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: " + (e.InnerException ?? e));
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultUtil IsBlacklisted: {e.Message}");
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: {e}");
                 return false;
             }
         }
@@ -63,11 +63,14 @@ namespace RFVault.Utils
             {
                 await Plugin.Inst.Database.VaultManager.AddAsync(player.CSteamID.m_SteamID, vault);
                 await ThreadUtil.RunOnGameThreadAsync(() => LoadVault(player, vault));
+                if (Plugin.Conf.DebugMode)
+                    Logger.LogWarning(
+                        $"[{Plugin.Inst.Name}] [DEBUG] {player.CharacterName} is accessing {vault.Name} Vault");
             }
             catch (Exception e)
             {
-                Logger.LogError("[RFVault] [ERROR] OpenVaultAsync: " + e.Message);
-                Logger.LogError("[RFVault] [ERROR] Details: " + (e.InnerException ?? e));
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] OpenVaultAsync: {e.Message}");
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: {e}");
             }
             finally
             {
@@ -93,8 +96,8 @@ namespace RFVault.Utils
             }
             catch (Exception e)
             {
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultUtil OpenVirtualTrashAsync: " + e.Message);
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: " + (e.InnerException ?? e));
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultUtil OpenVirtualTrashAsync: {e.Message}");
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: {e}");
             }
         }
 
@@ -102,7 +105,7 @@ namespace RFVault.Utils
         {
             try
             {
-                var pComponent = player.GetComponent<PlayerComponent>();
+                var pComponent = player.GetPlayerComponent();
                 
                 if (player.Player.equipment.isEquipped || player.Player.equipment.isSelected)
                     player.Player.equipment.dequip();
@@ -124,8 +127,8 @@ namespace RFVault.Utils
             }
             catch (Exception e)
             {
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultUtil LoadVault: " + e.Message);
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: " + (e.InnerException ?? e));
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultUtil LoadVault: {e.Message}");
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: {e}");
             }
         }
     }

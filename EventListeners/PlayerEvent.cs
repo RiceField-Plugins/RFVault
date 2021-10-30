@@ -7,37 +7,16 @@ using RFVault.Enums;
 using RFVault.Models;
 using RFVault.Utils;
 using Rocket.Core.Logging;
-using Rocket.Unturned.Events;
 using Rocket.Unturned.Player;
 using SDG.Unturned;
+
+// ReSharper disable InconsistentNaming
 
 namespace RFVault.EventListeners
 {
     public static class PlayerEvent
     {
-        public static void OnGesture(UnturnedPlayer player, UnturnedPlayerEvents.PlayerGesture gesture)
-        {
-            try
-            {
-                if (gesture != UnturnedPlayerEvents.PlayerGesture.InventoryClose)
-                    return;
-                var pComponent = player.GetPlayerComponent();
-                if (!pComponent.IsSubmitting)
-                    return;
-                pComponent.IsSubmitting = false;
-                pComponent.IsProcessingVault = false;
-                player.Inventory.updateItems(7, new Items(7));
-                if (Plugin.Conf.DebugMode)
-                    Logger.LogWarning($"[RFVault] {player.CharacterName} is closing a vault");
-            }
-            catch (Exception e)
-            {
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] PlayerEvent OnGesture: " + e.Message);
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: " + (e.InnerException ?? e));
-            }
-        }
-
-        public static void OnTakeItem(Player uplayer, byte x, byte y, uint instanceID, byte to_x, byte to_y,
+        public static void OnPreItemTook(Player uplayer, byte x, byte y, uint instanceID, byte to_x, byte to_y,
             byte to_rot, byte to_page, ItemData itemData, ref bool shouldAllow)
         {
             try
@@ -63,13 +42,14 @@ namespace RFVault.EventListeners
             }
             catch (Exception e)
             {
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] PlayerEvent OnTakeItem: " + e.Message);
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: " + (e.InnerException ?? e));
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] PlayerEvent OnPreItemTook: {e.Message}");
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: {e}");
                 shouldAllow = true;
             }
         }
 
-        internal static StateUpdated OnVaultStorageUpdated(UnturnedPlayer player, Vault vault, PlayerVault loadedVault, Items vaultItems)
+        internal static StateUpdated OnVaultStorageUpdated(UnturnedPlayer player, Vault vault, PlayerVault loadedVault,
+            Items vaultItems)
         {
             return () =>
             {
@@ -83,10 +63,134 @@ namespace RFVault.EventListeners
                     await Plugin.Inst.Database.VaultManager.UpdateAsync(player.CSteamID.m_SteamID, vault)).Forget(
                     e =>
                     {
-                        Logger.LogError("[RFVault] [ERROR] VaultManager UpdateAsync: " + e.Message);
-                        Logger.LogError("[RFVault] [ERROR] Details: " + (e.InnerException ?? e));
+                        Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultManager UpdateAsync: {e.Message}");
+                        Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: {e}");
                     });
             };
+        }
+
+        public static void OnEquipmentChanged(Player uPlayer)
+        {
+            try
+            {
+                var player = UnturnedPlayer.FromPlayer(uPlayer);
+                var pComponent = player.GetPlayerComponent();
+                if (!pComponent.IsSubmitting || pComponent.IsProcessingVault)
+                    return;
+                pComponent.IsSubmitting = false;
+                pComponent.IsProcessingVault = false;
+                player.Inventory.updateItems(7, new Items(7));
+                if (Plugin.Conf.DebugMode)
+                    Logger.LogWarning($"[{Plugin.Inst.Name}] [DEBUG] {player.CharacterName} is closing a vault");
+            }
+            catch (Exception e)
+            {
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] PlayerEvent OnEquipmentChanged: {e.Message}");
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: {e}");
+            }
+        }
+
+        internal static void OnGestureChanged(Player uPlayer, EPlayerGesture gesture)
+        {
+            try
+            {
+                if (gesture != EPlayerGesture.INVENTORY_STOP)
+                    return;
+                var player = UnturnedPlayer.FromPlayer(uPlayer);
+                var pComponent = player.GetPlayerComponent();
+                if (!pComponent.IsSubmitting)
+                    return;
+                pComponent.IsSubmitting = false;
+                pComponent.IsProcessingVault = false;
+                player.Inventory.updateItems(7, new Items(7));
+                if (Plugin.Conf.DebugMode)
+                    Logger.LogWarning($"[{Plugin.Inst.Name}] [DEBUG] {player.CharacterName} is closing a vault");
+            }
+            catch (Exception e)
+            {
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] PlayerEvent OnGesture: {e.Message}");
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: {e}");
+            }
+        }
+
+        public static void OnPreItemDragged(PlayerInventory inventory, byte page_0, byte x_0, byte y_0, byte page_1,
+            byte x_1, byte y_1, byte rot_1, ref bool shouldAllow)
+        {
+            try
+            {
+                var player = UnturnedPlayer.FromPlayer(inventory.player);
+                var pComponent = player.GetPlayerComponent();
+                // Allow if player is not accessing virtual locker
+                if (!pComponent.IsSubmitting)
+                    return;
+
+                // Bug fix: Disallow if player storing primary/secondary item to storage or vice versa
+                if ((page_0 == 0 || page_0 == 1) && page_1 == 7 || (page_1 == 0 || page_1 == 1) && page_0 == 7)
+                {
+                    shouldAllow = false;
+                    return;
+                }
+
+                // Allow if player is not dealing with Storage page
+                if (page_1 != 7)
+                    return;
+
+                var index = inventory.items[page_0].getIndex(x_0, y_0);
+                if (index == byte.MaxValue || page_1 >= PlayerInventory.PAGES - 1 || inventory.items[page_1] == null ||
+                    inventory.getItemCount(page_1) >= 200)
+                    return;
+
+                var itemJar = inventory.items[page_0].getItem(index);
+                if (itemJar == null || !inventory.checkSpaceDrag(page_1, x_0, y_0, itemJar.rot, x_1, y_1, rot_1,
+                    itemJar.size_x, itemJar.size_y, page_0 == page_1))
+                    return;
+
+                // Disallow if item is in blacklist
+                shouldAllow = !VaultUtil.IsBlacklisted(player, itemJar.item.id);
+            }
+            catch (Exception e)
+            {
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] PlayerEvent OnPreItemDragged: {e.Message}");
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: {e}");
+            }
+        }
+
+        public static void OnPreItemSwapped(PlayerInventory inventory, byte page_0, byte x_0, byte y_0, byte rot_0,
+            byte page_1, byte x_1, byte y_1, byte rot_1, ref bool shouldAllow)
+        {
+            try
+            {
+                var player = UnturnedPlayer.FromPlayer(inventory.player);
+                var pComponent = player.GetPlayerComponent();
+
+                // Allow if player is not accessing virtual locker
+                if (!pComponent.IsSubmitting)
+                    return;
+
+                // Bug fix: Disallow if player storing primary/secondary item to storage or vice versa
+                if ((page_0 == 0 || page_0 == 1) && page_1 == 7 || (page_1 == 0 || page_1 == 1) && page_0 == 7)
+                {
+                    shouldAllow = false;
+                    return;
+                }
+
+                // Run if player is not dealing with Storage page
+                if (page_1 != 7)
+                    return;
+
+                var index = inventory.items[page_0].getIndex(x_0, y_0);
+                if (index == byte.MaxValue)
+                    return;
+
+                var itemJar = inventory.items[page_0].getItem(index);
+                // Disallow if item is in blacklist
+                shouldAllow = !VaultUtil.IsBlacklisted(player, itemJar.item.id);
+            }
+            catch (Exception e)
+            {
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] PlayerEvent OnPreItemSwapped: {e.Message}");
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: {e}");
+            }
         }
     }
 }

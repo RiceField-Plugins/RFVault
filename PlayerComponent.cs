@@ -17,6 +17,8 @@ namespace RFVault
             var vault = VaultUtil.GetVaults(Player).FirstOrDefault();
             if (vault != null)
                 SelectedVault = vault;
+            IsSubmitting = false;
+            IsProcessingVault = false;
         }
 
         protected override void Unload()
