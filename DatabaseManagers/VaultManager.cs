@@ -27,7 +27,7 @@ namespace RFVault.DatabaseManagers
         private const string LiteDB_TableName = "vault";
 
         private const string Json_FileName = "vault.json";
-        private DataStore<List<PlayerVault>> Json_DataStore { get; }
+        private DataStore<List<PlayerVault>> Json_DataStore { get; set; }
 
         private const string MySql_TableName = "rfvault";
 
@@ -349,9 +349,11 @@ namespace RFVault.DatabaseManagers
                         switch (to)
                         {
                             case EDatabase.JSON:
+                                Json_DataStore = new DataStore<List<PlayerVault>>(Plugin.Inst.Directory, Json_FileName);
                                 await Json_DataStore.SaveAsync(MigrateCollection);
                                 break;
                             case EDatabase.MYSQL:
+                                MySQL_CreateTable(MySql_TableName, MySql_CreateTableQuery);
                                 using (var connection =
                                     new MySql.Data.MySqlClient.MySqlConnection(DatabaseManager.MySql_ConnectionString))
                                 {
@@ -384,6 +386,7 @@ namespace RFVault.DatabaseManagers
 
                         break;
                     case EDatabase.JSON:
+                        Json_DataStore = new DataStore<List<PlayerVault>>(Plugin.Inst.Directory, Json_FileName);
                         JSON_Reload(true);
                         switch (to)
                         {
@@ -398,6 +401,7 @@ namespace RFVault.DatabaseManagers
 
                                 break;
                             case EDatabase.MYSQL:
+                                MySQL_CreateTable(MySql_TableName, MySql_CreateTableQuery);
                                 using (var connection =
                                     new MySql.Data.MySqlClient.MySqlConnection(DatabaseManager.MySql_ConnectionString))
                                 {
@@ -444,6 +448,7 @@ namespace RFVault.DatabaseManagers
 
                                 break;
                             case EDatabase.JSON:
+                                Json_DataStore = new DataStore<List<PlayerVault>>(Plugin.Inst.Directory, Json_FileName);
                                 await Json_DataStore.SaveAsync(MigrateCollection);
                                 break;
                             default:
