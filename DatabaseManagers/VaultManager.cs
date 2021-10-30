@@ -18,6 +18,7 @@ namespace RFVault.DatabaseManagers
     {
         internal static bool Ready { get; set; }
         internal List<PlayerVault> Collection { get; set; } = new List<PlayerVault>();
+        internal List<PlayerVault> MigrateCollection { get; set; } = new List<PlayerVault>();
 
         private static readonly string LiteDB_TableName = "vault";
 
@@ -110,16 +111,32 @@ namespace RFVault.DatabaseManagers
             return result;
         }
 
-        private async UniTask LiteDB_ReloadAsync()
+        private async UniTask LiteDB_ReloadAsync(bool migrate = false)
         {
+            if (migrate)
+            {
+                MigrateCollection = await LiteDB_LoadAsync();
+                if (MigrateCollection != null)
+                    return;
+                MigrateCollection = new List<PlayerVault>();
+                return;
+            }
             Collection = await LiteDB_LoadAsync();
             if (Collection != null)
                 return;
             Collection = new List<PlayerVault>();
         }
 
-        private async UniTask JSON_ReloadAsync()
+        private async UniTask JSON_ReloadAsync(bool migrate = false)
         {
+            if (migrate)
+            {
+                MigrateCollection = await Json_DataStore.LoadAsync();
+                if (MigrateCollection != null)
+                    return;
+                MigrateCollection = new List<PlayerVault>();
+                return;
+            }
             Collection = await Json_DataStore.LoadAsync();
             if (Collection != null)
                 return;
@@ -158,9 +175,17 @@ namespace RFVault.DatabaseManagers
             return result;
         }
 
-        private async UniTask MySQL_ReloadAsync()
+        private async UniTask MySQL_ReloadAsync(bool migrate = false)
         {
             await MySQL_CreateTableAsync(MySql_TableName, MySql_CreateTableQuery);
+            if (migrate)
+            {
+                MigrateCollection = await MySQL_LoadAsync();
+                if (MigrateCollection != null)
+                    return;
+                MigrateCollection = new List<PlayerVault>();
+                return;
+            }
             Collection = await MySQL_LoadAsync();
             if (Collection != null)
                 return;
@@ -273,10 +298,11 @@ namespace RFVault.DatabaseManagers
             switch (from)
             {
                 case EDatabase.LITEDB:
-                    await LiteDB_ReloadAsync();
+                    await LiteDB_ReloadAsync(true);
                     switch (to)
                     {
                         case EDatabase.JSON:
+                            Json_DataStore = new DataStore<List<PlayerVault>>(Plugin.Inst.Directory, Json_FileName);
                             await Json_DataStore.SaveAsync(Collection);
                             break;
                         case EDatabase.MYSQL:
@@ -312,7 +338,8 @@ namespace RFVault.DatabaseManagers
 
                     break;
                 case EDatabase.JSON:
-                    await JSON_ReloadAsync();
+                    Json_DataStore = new DataStore<List<PlayerVault>>(Plugin.Inst.Directory, Json_FileName);
+                    await JSON_ReloadAsync(true);
                     switch (to)
                     {
                         case EDatabase.LITEDB:
@@ -357,7 +384,7 @@ namespace RFVault.DatabaseManagers
 
                     break;
                 case EDatabase.MYSQL:
-                    await MySQL_ReloadAsync();
+                    await MySQL_ReloadAsync(true);
                     switch (to)
                     {
                         case EDatabase.LITEDB:
@@ -365,12 +392,13 @@ namespace RFVault.DatabaseManagers
                             {
                                 var col = db.GetCollection<PlayerVault>(LiteDB_TableName);
                                 await col.DeleteAllAsync();
-                                await col.InsertBulkAsync(Collection);
+                                await col.InsertBulkAsync(MigrateCollection);
                             }
 
                             break;
                         case EDatabase.JSON:
-                            await Json_DataStore.SaveAsync(Collection);
+                            Json_DataStore = new DataStore<List<PlayerVault>>(Plugin.Inst.Directory, Json_FileName);
+                            await Json_DataStore.SaveAsync(MigrateCollection);
                             break;
                         default:
                             throw new ArgumentOutOfRangeException(nameof(to), to, null);
@@ -380,6 +408,8 @@ namespace RFVault.DatabaseManagers
                 default:
                     throw new ArgumentOutOfRangeException(nameof(from), from, null);
             }
+            MigrateCollection.Clear();
+            MigrateCollection.TrimExcess();
         }
 #if DEBUG
         private List<PlayerVault> MySQLLocker_LoadAsync()
