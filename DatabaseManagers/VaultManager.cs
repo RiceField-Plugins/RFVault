@@ -220,7 +220,6 @@ namespace RFVault.DatabaseManagers
                     {
                         var col = db.GetCollection<PlayerVault>(LiteDB_TableName);
                         await col.InsertAsync(playerVault);
-                        await col.EnsureIndexAsync(x => x.SteamId);
                     }
 
                     break;
@@ -234,10 +233,9 @@ namespace RFVault.DatabaseManagers
                         var serialized = playerVault.VaultContent.Serialize();
                         var vaultContent = serialized.ToBase64();
                         var insertQuery =
-                            $"INSERT INTO `{MySql_TableName}` (Id, SteamId, VaultName, VaultContent) " +
-                            "VALUES(@Id, @SteamId, @VaultName, @VaultContent)";
+                            $"INSERT INTO `{MySql_TableName}` (SteamId, VaultName, VaultContent) " +
+                            "VALUES(@SteamId, @VaultName, @VaultContent)";
                         var parameter = new Dapper.DynamicParameters();
-                        parameter.Add("@Id", playerVault.Id, DbType.Int32, ParameterDirection.Input);
                         parameter.Add("@SteamId", steamId, DbType.String, ParameterDirection.Input);
                         parameter.Add("@VaultName", playerVault.VaultName, DbType.String, ParameterDirection.Input);
                         parameter.Add("@VaultContent", vaultContent, DbType.String, ParameterDirection.Input);
