@@ -29,7 +29,7 @@ namespace RFVault.DatabaseManagers
         private const string Json_FileName = "vault.json";
         private DataStore<List<PlayerVault>> Json_DataStore { get; set; }
 
-        private const string MySql_TableName = "rfvault";
+        private string MySql_TableName => $"{DatabaseManager.MySql_TableName}";
 
         private const string MySql_CreateTableQuery =
             "`Id` INT NOT NULL AUTO_INCREMENT, " +
@@ -49,6 +49,9 @@ namespace RFVault.DatabaseManagers
                         Json_DataStore = new DataStore<List<PlayerVault>>(Plugin.Inst.Directory, Json_FileName);
                         JSON_Reload();
                         break;
+                    case EDatabase.LITEDB:
+                        LiteDB_Init();
+                        break;
                     case EDatabase.MYSQL:
                         MySQL_CreateTable(MySql_TableName, MySql_CreateTableQuery);
                         break;
@@ -60,6 +63,23 @@ namespace RFVault.DatabaseManagers
             {
                 Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultManager Initializing: {e.Message}");
                 Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: {e}");
+            }
+        }
+
+        private void LiteDB_Init()
+        {
+            using (var db = new LiteDB.LiteDatabase(DatabaseManager.LiteDB_ConnectionString))
+            {
+                if (db.UserVersion == 0)
+                {
+                    var col = db.GetCollection<PlayerVault>(LiteDB_TableName);
+                    col.EnsureIndex(x => x.Id);
+                    col.EnsureIndex(x => x.SteamId);
+                    col.EnsureIndex(x => x.VaultName);
+                    col.EnsureIndex(x => x.LastUpdated);
+                    
+                    db.UserVersion = 1;
+                }
             }
         }
 
@@ -221,7 +241,7 @@ namespace RFVault.DatabaseManagers
                             var serialized = playerVault.VaultContent.Serialize();
                             var vaultContent = serialized.ToBase64();
                             var insertQuery =
-                                $"INSERT INTO `{MySql_TableName}` (SteamId, VaultName, VaultContent) " +
+                                $"INSERT INTO `{MySql_TableName}` (`SteamId`, `VaultName`, `VaultContent`) " +
                                 "VALUES(@SteamId, @VaultName, @VaultContent); SELECT last_insert_id();";
                             var parameter = new Dapper.DynamicParameters();
                             parameter.Add("@SteamId", steamId, DbType.String, ParameterDirection.Input);
@@ -248,9 +268,9 @@ namespace RFVault.DatabaseManagers
                             new MySql.Data.MySqlClient.MySqlConnection(DatabaseManager.MySql_ConnectionString))
                         {
                             var max = await Dapper.SqlMapper.ExecuteScalarAsync<int>(connection,
-                                $"SELECT MAX(Id) FROM {MySql_TableName};");
+                                $"SELECT MAX(`Id`) FROM `{MySql_TableName}`;");
                             await Dapper.SqlMapper.ExecuteAsync(connection,
-                                $"ALTER TABLE {MySql_TableName} AUTO_INCREMENT = {max + 100};");
+                                $"ALTER TABLE `{MySql_TableName}` AUTO_INCREMENT = {max + 100};");
                             var existing = await Dapper.SqlMapper.ExecuteScalarAsync<bool>(connection,
                                 $"SELECT COUNT(DISTINCT 1) FROM `{MySql_TableName}` WHERE `SteamId` = '@SteamId' AND `VaultName` = '@VaultName';",
                                 new {SteamId = steamId.ToString(), VaultName = vault.Name});
@@ -260,7 +280,7 @@ namespace RFVault.DatabaseManagers
                             var serialized = playerVault.VaultContent.Serialize();
                             var vaultContent = serialized.ToBase64();
                             var insertQuery =
-                                $"INSERT INTO `{MySql_TableName}` (SteamId, VaultName, VaultContent) " +
+                                $"INSERT INTO `{MySql_TableName}` (`SteamId`, `VaultName`, `VaultContent`) " +
                                 "VALUES(@SteamId, @VaultName, @VaultContent); SELECT last_insert_id();";
                             var parameter = new Dapper.DynamicParameters();
                             parameter.Add("@SteamId", steamId, DbType.String, ParameterDirection.Input);
@@ -297,7 +317,7 @@ namespace RFVault.DatabaseManagers
                             parameter.Add("@SteamId", steamId, DbType.String, ParameterDirection.Input);
                             parameter.Add("@VaultName", vault.Name, DbType.String, ParameterDirection.Input);
                             var query =
-                                $"SELECT * FROM `{MySql_TableName}` WHERE SteamId = @SteamId AND VaultName = @VaultName;";
+                                $"SELECT * FROM `{MySql_TableName}` WHERE `SteamId` = @SteamId AND `VaultName` = @VaultName;";
                             var databases = Dapper.SqlMapper.Query(connection, query, parameter)
                                 .Cast<IDictionary<string, object>>();
                             var database = databases.First();
@@ -357,7 +377,7 @@ namespace RFVault.DatabaseManagers
                                 ParameterDirection.Input);
                             parameter.Add("@VaultContent", vaultContent, DbType.String, ParameterDirection.Input);
                             var updateQuery =
-                                $"UPDATE {MySql_TableName} SET VaultContent = @VaultContent WHERE SteamId = @SteamId AND VaultName = @VaultName;";
+                                $"UPDATE {MySql_TableName} SET `VaultContent` = @VaultContent WHERE `SteamId` = @SteamId AND `VaultName` = @VaultName;";
                             result = await Dapper.SqlMapper.ExecuteAsync(connection, updateQuery, parameter);
                         }
 
@@ -393,7 +413,7 @@ namespace RFVault.DatabaseManagers
                                 using (var connection =
                                     new MySql.Data.MySqlClient.MySqlConnection(DatabaseManager.MySql_ConnectionString))
                                 {
-                                    var deleteQuery = $"DELETE FROM {MySql_TableName};";
+                                    var deleteQuery = $"DELETE FROM `{MySql_TableName}`;";
                                     await Dapper.SqlMapper.ExecuteAsync(connection, deleteQuery);
 
                                     foreach (var playerVault in MigrateCollection)
@@ -409,7 +429,7 @@ namespace RFVault.DatabaseManagers
                                         parameter.Add("@VaultContent", vaultContent ?? string.Empty, DbType.String,
                                             ParameterDirection.Input);
                                         var insertQuery =
-                                            $"INSERT INTO `{MySql_TableName}` (Id, SteamId, VaultName, VaultContent) " +
+                                            $"INSERT INTO `{MySql_TableName}` (`Id`, `SteamId`, `VaultName`, `VaultContent`) " +
                                             "VALUES(@Id, @SteamId, @VaultName, @VaultContent);";
                                         await Dapper.SqlMapper.ExecuteAsync(connection, insertQuery, parameter);
                                     }
@@ -441,7 +461,7 @@ namespace RFVault.DatabaseManagers
                                 using (var connection =
                                     new MySql.Data.MySqlClient.MySqlConnection(DatabaseManager.MySql_ConnectionString))
                                 {
-                                    var deleteQuery = $"DELETE FROM {MySql_TableName};";
+                                    var deleteQuery = $"DELETE FROM `{MySql_TableName}`;";
                                     await Dapper.SqlMapper.ExecuteAsync(connection, deleteQuery);
 
                                     foreach (var playerVault in MigrateCollection)
@@ -457,7 +477,7 @@ namespace RFVault.DatabaseManagers
                                         parameter.Add("@VaultContent", vaultContent ?? string.Empty, DbType.String,
                                             ParameterDirection.Input);
                                         var insertQuery =
-                                            $"INSERT INTO `{MySql_TableName}` (Id, SteamId, VaultName, VaultContent) " +
+                                            $"INSERT INTO `{MySql_TableName}` (`Id`, `SteamId`, `VaultName`, `VaultContent`) " +
                                             "VALUES(@Id, @SteamId, @VaultName, @VaultContent);";
                                         await Dapper.SqlMapper.ExecuteAsync(connection, insertQuery, parameter);
                                     }

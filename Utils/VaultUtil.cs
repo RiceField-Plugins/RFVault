@@ -63,6 +63,7 @@ namespace RFVault.Utils
             {
                 await Plugin.Inst.Database.VaultManager.AddAsync(player.CSteamID.m_SteamID, vault);
                 await ThreadUtil.RunOnGameThreadAsync(() => LoadVault(player, vault));
+                await Plugin.Inst.Database.VaultManager.UpdateAsync(player.CSteamID.m_SteamID, vault);
                 if (Plugin.Conf.DebugMode)
                     Logger.LogWarning(
                         $"[{Plugin.Inst.Name}] [DEBUG] {player.CharacterName} is accessing {vault.Name} Vault");
@@ -117,8 +118,13 @@ namespace RFVault.Utils
                 if (Plugin.Conf.Database != EDatabase.JSON)
                     pComponent.CachedVault = loadedVault;
                 foreach (var itemJarWrapper in loadedVault.VaultContent.Items)
-                    vaultItems.addItem(itemJarWrapper.X, itemJarWrapper.Y, itemJarWrapper.Rotation,
-                        itemJarWrapper.Item.ToItem());
+                {
+                    if (itemJarWrapper.X > vault.Width || itemJarWrapper.Y > vault.Height)
+                        ItemManager.dropItem(itemJarWrapper.Item.ToItem(), player.Position, true, true, true);
+                    else
+                        vaultItems.addItem(itemJarWrapper.X, itemJarWrapper.Y, itemJarWrapper.Rotation,
+                            itemJarWrapper.Item.ToItem());
+                }
 
                 vaultItems.onStateUpdated += PlayerEvent.OnVaultStorageUpdated(player, vault, loadedVault, vaultItems);
                 player.Player.inventory.updateItems(7, vaultItems);

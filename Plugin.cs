@@ -1,4 +1,6 @@
-﻿using RFRocketLibrary.Events;
+﻿using RFRocketLibrary.Enum;
+using RFRocketLibrary.Events;
+using RFRocketLibrary.Utils;
 using RFVault.DatabaseManagers;
 using RFVault.Enums;
 using RFVault.EventListeners;
@@ -14,7 +16,7 @@ namespace RFVault
     {
         private const int Major = 1;
         private const int Minor = 1;
-        private const int Patch = 0;
+        private const int Patch = 1;
         
         public static Plugin Inst;
         public static Configuration Conf;
@@ -28,10 +30,34 @@ namespace RFVault
             if (Conf.Enabled)
             {
                 MsgColor = UnturnedChat.GetColorFromName(Conf.MessageColor, Color.green);
+                
+                if (DependencyUtil.CanBeLoaded(EDependency.Harmony))
+                {
+                    DependencyUtil.Load(EDependency.Harmony);
+                }
+                if (DependencyUtil.CanBeLoaded(EDependency.NewtonsoftJson))
+                {
+                    DependencyUtil.Load(EDependency.NewtonsoftJson);
+                    DependencyUtil.Load(EDependency.SystemRuntimeSerialization);
+                }
+                if (DependencyUtil.CanBeLoaded(EDependency.LiteDB))
+                {
+                    DependencyUtil.Load(EDependency.LiteDB);
+                    DependencyUtil.Load(EDependency.LiteDBAsync);
+                }
+                if (DependencyUtil.CanBeLoaded(EDependency.Dapper))
+                {
+                    DependencyUtil.Load(EDependency.Dapper);
+                    DependencyUtil.Load(EDependency.MySqlData);
+                    DependencyUtil.Load(EDependency.SystemManagement);
+                    DependencyUtil.Load(EDependency.UbietyDnsCore);
+                }
+                
                 Database = new DatabaseManager();
                 
                 //Load RFRocketLibrary Events
                 EventBus.Load();
+                
                 UnturnedEvent.OnPlayerChangedEquipment += PlayerEvent.OnEquipmentChanged;
                 UnturnedEvent.OnPlayerChangedGesture += PlayerEvent.OnGestureChanged;
                 UnturnedEvent.OnPrePlayerTookItem += PlayerEvent.OnPreItemTook;
