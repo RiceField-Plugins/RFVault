@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Xml.Serialization;
 using RFVault.Enums;
 using RFVault.Models;
 using Rocket.API;
@@ -23,7 +22,7 @@ namespace RFVault
             Enabled = true;
             DebugMode = false;
             Database = EDatabase.LITEDB;
-            MySqlConnectionString = "SERVER=127.0.0.1;DATABASE=unturned;UID=root;PASSWORD=123456;PORT=3306;";
+            MySqlConnectionString = "SERVER=127.0.0.1;DATABASE=unturned;UID=root;PASSWORD=123456;PORT=3306;TABLENAME=rfvault;";
             MessageColor = "magenta";
             AnnouncerIconUrl = "https://cdn.jsdelivr.net/gh/RiceField-Plugins/UnturnedImages@images/plugin/RFVault/RFVault.png";
             Trash = new Trash(10, 10);
