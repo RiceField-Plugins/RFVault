@@ -15,6 +15,7 @@ namespace RFVault.Enums
         BLACKLIST,
         NO_PERMISSION_ALL,
         IN_VEHICLE,
-        VAULT_PROCESSING
+        VAULT_PROCESSING,
+        NOT_ALLOWED_ADVANCED_REGIONS
     }
 }

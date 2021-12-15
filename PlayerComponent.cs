@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using RFVault.Models;
 using RFVault.Utils;
@@ -7,6 +8,7 @@ namespace RFVault
 {
     public class PlayerComponent : UnturnedPlayerComponent
     {
+        internal bool AdvancedRegionsAllowOpenVault { get; set; }
         internal Vault SelectedVault { get; set; }
         internal PlayerVault CachedVault { get; set; }
         internal bool IsSubmitting { get; set; }
@@ -17,6 +19,7 @@ namespace RFVault
             var vault = VaultUtil.GetVaults(Player).FirstOrDefault();
             if (vault != null)
                 SelectedVault = vault;
+            AdvancedRegionsAllowOpenVault = false;
             IsSubmitting = false;
             IsProcessingVault = false;
         }

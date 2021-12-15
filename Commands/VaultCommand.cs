@@ -66,6 +66,14 @@ namespace RFVault.Commands
                     return;
                 }
 
+                if (!pComponent.AdvancedRegionsAllowOpenVault)
+                {
+                    await context.ReplyAsync(
+                        Plugin.Inst.Translate(EResponse.NOT_ALLOWED_ADVANCED_REGIONS.ToString()),
+                        Plugin.MsgColor, Plugin.Conf.AnnouncerIconUrl);
+                    return;
+                }
+
                 await VaultUtil.OpenVaultAsync(player, pComponent.SelectedVault);
             }
 
@@ -93,6 +101,14 @@ namespace RFVault.Commands
                     await ThreadUtil.RunOnGameThreadAsync(() => ChatHelper.Say(context.Player,
                         Plugin.Inst.Translate(EResponse.VAULT_PROCESSING.ToString()), Plugin.MsgColor,
                         Plugin.Conf.AnnouncerIconUrl));
+                    return;
+                }
+
+                if (!pComponent.AdvancedRegionsAllowOpenVault)
+                {
+                    await context.ReplyAsync(
+                        Plugin.Inst.Translate(EResponse.NOT_ALLOWED_ADVANCED_REGIONS.ToString()),
+                        Plugin.MsgColor, Plugin.Conf.AnnouncerIconUrl);
                     return;
                 }
 

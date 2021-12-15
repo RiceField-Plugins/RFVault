@@ -1,12 +1,15 @@
-﻿using RFRocketLibrary.Enum;
+﻿using ImperialPlugins.AdvancedRegions;
+using RFRocketLibrary.Enum;
 using RFRocketLibrary.Events;
 using RFRocketLibrary.Utils;
+using RFVault.AdvancedRegions;
 using RFVault.DatabaseManagers;
 using RFVault.Enums;
 using RFVault.EventListeners;
 using Rocket.API.Collections;
 using Rocket.Core.Plugins;
 using Rocket.Unturned.Chat;
+using SDG.Unturned;
 using UnityEngine;
 using Logger = Rocket.Core.Logging.Logger;
 
@@ -16,7 +19,7 @@ namespace RFVault
     {
         private const int Major = 1;
         private const int Minor = 1;
-        private const int Patch = 1;
+        private const int Patch = 2;
         
         public static Plugin Inst;
         public static Configuration Conf;
@@ -63,6 +66,8 @@ namespace RFVault
                 UnturnedEvent.OnPrePlayerTookItem += PlayerEvent.OnPreItemTook;
                 UnturnedEvent.OnPrePlayerDraggedItem += PlayerEvent.OnPreItemDragged;
                 UnturnedEvent.OnPrePlayerSwappedItem += PlayerEvent.OnPreItemSwapped;
+
+                Level.onPostLevelLoaded += OnPostLevelLoaded;
             }
             else
                 Logger.LogError($"[{Name}] Plugin: DISABLED");
@@ -105,6 +110,12 @@ namespace RFVault
             {$"{EResponse.MIGRATION_START}", "[RFVault] Starting migration from {0} to {1}..."},
             {$"{EResponse.MIGRATION_FINISH}", "[RFVault] Migration finished!"},
             {$"{EResponse.DATABASE_NOT_READY}", "[RFVault] Database is not ready. Please wait..."},
+            {$"{EResponse.NOT_ALLOWED_ADVANCED_REGIONS}", "[RFVault] You are not allowed to access vault in this region!"},
         };
+
+        private void OnPostLevelLoaded(int level)
+        {
+            AdvancedRegionsPlugin.Instance.RegionFlagManager.RegisterFlag<VaultFlag>();
+        }
     }
 }
