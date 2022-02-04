@@ -81,7 +81,7 @@
         <HintPath>..\..\..\Libraries\Dapper\MySql.Data.8.0.25.dll</HintPath>
       </Reference>
       <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed">
-        <HintPath>..\..\..\Libraries\RFRocketMod\Newtonsoft.Json.13.0.1.dll</HintPath>
+        <HintPath>..\..\..\Libraries\RFRocketMod\Newtonsoft.Json.dll</HintPath>
       </Reference>
       <Reference Include="RFRocketLibrary, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
         <HintPath>..\..\..\Libraries\RFRocketMod\RFRocketLibrary.dll</HintPath>
