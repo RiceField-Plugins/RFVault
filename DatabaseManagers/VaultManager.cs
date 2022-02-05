@@ -215,7 +215,9 @@ namespace RFVault.DatabaseManagers
                             var col = db.GetCollection<PlayerVault>(LiteDB_TableName);
                             existingVault =
                                 await col.FindOneAsync(x => x.SteamId == steamId && x.VaultName == vault.Name);
-                            if (existingVault != null) return;
+                            if (existingVault != null) 
+                                return;
+                            
                             await col.InsertAsync(playerVault);
                             await col.EnsureIndexAsync(x => x.SteamId);
                         }
@@ -223,7 +225,9 @@ namespace RFVault.DatabaseManagers
                         break;
                     case EDatabase.JSON:
                         existingVault = Json_Collection.Find(x => x.SteamId == steamId && x.VaultName == vault.Name);
-                        if (existingVault != null) return;
+                        if (existingVault != null) 
+                            return;
+                        
                         playerVault.Id = Json_NewId();
                         Json_Collection.Add(playerVault);
                         await Json_DataStore.SaveAsync(Json_Collection);
@@ -233,8 +237,8 @@ namespace RFVault.DatabaseManagers
                             new MySql.Data.MySqlClient.MySqlConnection(DatabaseManager.MySql_ConnectionString))
                         {
                             var existing = await Dapper.SqlMapper.ExecuteScalarAsync<bool>(connection,
-                                $"SELECT COUNT(DISTINCT 1) FROM `{MySql_TableName}` WHERE `SteamId` = '@SteamId' AND `VaultName` = '@VaultName';",
-                                new {SteamId = steamId.ToString(), VaultName = vault.Name});
+                                $"SELECT COUNT(DISTINCT 1) FROM `{MySql_TableName}` WHERE `SteamId` = @SteamId AND `VaultName` = @VaultName;",
+                                new {SteamId = steamId, VaultName = vault.Name});
                             if (existing)
                                 return;
 
@@ -257,41 +261,6 @@ namespace RFVault.DatabaseManagers
             {
                 Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultManager AddAsync: {e.Message}");
                 Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: {e}");
-                switch (Plugin.Conf.Database)
-                {
-                    case EDatabase.LITEDB:
-                        break;
-                    case EDatabase.JSON:
-                        break;
-                    case EDatabase.MYSQL:
-                        using (var connection =
-                            new MySql.Data.MySqlClient.MySqlConnection(DatabaseManager.MySql_ConnectionString))
-                        {
-                            var max = await Dapper.SqlMapper.ExecuteScalarAsync<int>(connection,
-                                $"SELECT MAX(`Id`) FROM `{MySql_TableName}`;");
-                            await Dapper.SqlMapper.ExecuteAsync(connection,
-                                $"ALTER TABLE `{MySql_TableName}` AUTO_INCREMENT = {max + 100};");
-                            var existing = await Dapper.SqlMapper.ExecuteScalarAsync<bool>(connection,
-                                $"SELECT COUNT(DISTINCT 1) FROM `{MySql_TableName}` WHERE `SteamId` = '@SteamId' AND `VaultName` = '@VaultName';",
-                                new {SteamId = steamId.ToString(), VaultName = vault.Name});
-                            if (existing)
-                                return;
-
-                            var serialized = playerVault.VaultContent.Serialize();
-                            var vaultContent = serialized.ToBase64();
-                            var insertQuery =
-                                $"INSERT INTO `{MySql_TableName}` (`SteamId`, `VaultName`, `VaultContent`) " +
-                                "VALUES(@SteamId, @VaultName, @VaultContent); SELECT last_insert_id();";
-                            var parameter = new Dapper.DynamicParameters();
-                            parameter.Add("@SteamId", steamId, DbType.String, ParameterDirection.Input);
-                            parameter.Add("@VaultName", playerVault.VaultName, DbType.String, ParameterDirection.Input);
-                            parameter.Add("@VaultContent", vaultContent, DbType.String, ParameterDirection.Input);
-                            await Dapper.SqlMapper.ExecuteScalarAsync<int>(connection, insertQuery, parameter);
-                        }
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
             }
         }
 
