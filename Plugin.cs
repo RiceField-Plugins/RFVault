@@ -105,6 +105,10 @@ namespace RFVault
             {$"{EResponse.MIGRATION_START}", "[RFVault] Starting migration from {0} to {1}..."},
             {$"{EResponse.MIGRATION_FINISH}", "[RFVault] Migration finished!"},
             {$"{EResponse.DATABASE_NOT_READY}", "[RFVault] Database is not ready. Please wait..."},
+            {$"{EResponse.PLAYER_VAULT_NOT_FOUND}", "[RFVault] {0} doesn't have {1} Vault!"},
+            {$"{EResponse.ADMIN_VAULT_CLEAR}", "[RFVault] Successfully cleared {0}'s {1} Vault"},
+            {$"{EResponse.VAULT_CLEAR}", "[RFVault] Successfully cleared {0} Vault!"},
+            {$"{EResponse.PLAYER_NOT_FOUND}", "[RFVault] Can't find player under name {0}!"},
         };
     }
 }

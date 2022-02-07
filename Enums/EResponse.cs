@@ -15,6 +15,10 @@ namespace RFVault.Enums
         BLACKLIST,
         NO_PERMISSION_ALL,
         IN_VEHICLE,
-        VAULT_PROCESSING
+        VAULT_PROCESSING,
+        PLAYER_VAULT_NOT_FOUND,
+        ADMIN_VAULT_CLEAR,
+        VAULT_CLEAR,
+        PLAYER_NOT_FOUND
     }
 }

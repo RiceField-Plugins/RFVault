@@ -331,6 +331,7 @@ namespace RFVault.DatabaseManagers
                         var index = Json_Collection.FindIndex(x => x.SteamId == steamId && x.VaultName == vault.Name);
                         if (index == -1)
                             return false;
+                        
                         return await Json_DataStore.SaveAsync(Json_Collection);
                     case EDatabase.MYSQL:
                         pComponent = UnturnedPlayer.FromCSteamID(new CSteamID(steamId)).GetComponent<PlayerComponent>();
@@ -343,6 +344,60 @@ namespace RFVault.DatabaseManagers
                             var parameter = new Dapper.DynamicParameters();
                             parameter.Add("@SteamId", steamId, DbType.String, ParameterDirection.Input);
                             parameter.Add("@VaultName", pComponent.CachedVault.VaultName, DbType.String,
+                                ParameterDirection.Input);
+                            parameter.Add("@VaultContent", vaultContent, DbType.String, ParameterDirection.Input);
+                            var updateQuery =
+                                $"UPDATE {MySql_TableName} SET `VaultContent` = @VaultContent WHERE `SteamId` = @SteamId AND `VaultName` = @VaultName;";
+                            result = await Dapper.SqlMapper.ExecuteAsync(connection, updateQuery, parameter);
+                        }
+
+                        return result == 1;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultManager UpdateAsync: {e.Message}");
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: {e}");
+                return false;
+            }
+        }
+        
+        internal async Task<bool> ClearAsync(ulong steamId, Vault vault)
+        {
+            try
+            {
+                switch (Plugin.Conf.Database)
+                {
+                    case EDatabase.LITEDB:
+                        using (var db = new LiteDB.Async.LiteDatabaseAsync(DatabaseManager.LiteDB_ConnectionString))
+                        {
+                            var col = db.GetCollection<PlayerVault>(LiteDB_TableName);
+                            var playerVault = await col.FindOneAsync(x => x.SteamId == steamId && x.VaultName == vault.Name);
+                            if (playerVault == null)
+                                return false;
+
+                            playerVault.VaultContent = new ItemsWrapper();
+                            return await col.UpdateAsync(playerVault);
+                        }
+                    case EDatabase.JSON:
+                        var index = Json_Collection.FindIndex(x => x.SteamId == steamId && x.VaultName == vault.Name);
+                        if (index == -1)
+                            return false;
+
+                        Json_Collection[index].VaultContent = new ItemsWrapper();
+                        return await Json_DataStore.SaveAsync(Json_Collection);
+                    case EDatabase.MYSQL:
+                        int result;
+                        using (var connection =
+                            new MySql.Data.MySqlClient.MySqlConnection(DatabaseManager.MySql_ConnectionString))
+                        {
+                            var serialized = new ItemsWrapper().Serialize();
+                            var vaultContent = serialized.ToBase64();
+                            var parameter = new Dapper.DynamicParameters();
+                            parameter.Add("@SteamId", steamId, DbType.String, ParameterDirection.Input);
+                            parameter.Add("@VaultName", vault.Name, DbType.String,
                                 ParameterDirection.Input);
                             parameter.Add("@VaultContent", vaultContent, DbType.String, ParameterDirection.Input);
                             var updateQuery =
