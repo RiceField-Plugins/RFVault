@@ -6,8 +6,8 @@ namespace RFVault.Models
 {
     public class Vault
     {
-        [XmlAttribute] public string Name;
-        [XmlAttribute] public string Permission;
+        [XmlAttribute] public string Name = string.Empty;
+        [XmlAttribute] public string Permission = string.Empty;
         [XmlAttribute] public byte Width;
         [XmlAttribute] public byte Height;
 
@@ -21,6 +21,19 @@ namespace RFVault.Models
             Permission = permission;
             Width = width;
             Height = height;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is not Vault vault)
+                return false;
+
+            return vault.Name == Name;
+        }
+
+        public override int GetHashCode()
+        {
+            return (Name != null ? Name.GetHashCode() : 0);
         }
 
         public static Vault Parse(string vaultName)

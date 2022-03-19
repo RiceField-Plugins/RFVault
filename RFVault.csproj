@@ -11,6 +11,7 @@
         <AssemblyName>RFVault</AssemblyName>
         <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
         <FileAlignment>512</FileAlignment>
+        <LangVersion>9</LangVersion>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
         <PlatformTarget>AnyCPU</PlatformTarget>
@@ -41,11 +42,12 @@
         <Compile Include="Commands\VaultsCommand.cs" />
         <Compile Include="Commands\VaultSetCommand.cs" />
         <Compile Include="Commands\VaultTransferCommand.cs" />
-        <Compile Include="Commands\SuperVaultCommand.cs" />
+        <Compile Include="Commands\AdminVaultCommand.cs" />
         <Compile Include="Commands\TrashCommand.cs" />
         <Compile Include="Configuration.cs" />
         <Compile Include="DatabaseManagers\DatabaseManager.cs" />
         <Compile Include="DatabaseManagers\VaultManager.cs" />
+        <Compile Include="DatabaseManagers\VaultVersionManager.cs" />
         <Compile Include="Enums\EDatabase.cs" />
         <Compile Include="Enums\EResponse.cs" />
         <Compile Include="EventListeners\PlayerEvent.cs" />
@@ -54,6 +56,7 @@
         <Compile Include="Models\PlayerVault.cs" />
         <Compile Include="Models\Trash.cs" />
         <Compile Include="Models\Vault.cs" />
+        <Compile Include="Models\VaultVersion.cs" />
         <Compile Include="PlayerComponent.cs" />
         <Compile Include="Plugin.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
@@ -85,7 +88,7 @@
       <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed">
         <HintPath>..\..\..\Libraries\RFRocketMod\Newtonsoft.Json.dll</HintPath>
       </Reference>
-      <Reference Include="RFRocketLibrary, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+      <Reference Include="RFRocketLibrary, Version=1.0.1.0, Culture=neutral, PublicKeyToken=null">
         <HintPath>..\..\..\Libraries\RFRocketMod\RFRocketLibrary.dll</HintPath>
       </Reference>
       <Reference Include="Rocket.API, Version=4.9.3.4, Culture=neutral, PublicKeyToken=null">

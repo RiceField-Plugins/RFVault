@@ -16,12 +16,11 @@ namespace RFVault
     {
         private const int Major = 1;
         private const int Minor = 1;
-        private const int Patch = 2;
+        private const int Patch = 6;
         
         public static Plugin Inst;
         public static Configuration Conf;
         internal static Color MsgColor;
-        internal DatabaseManager Database;
 
         protected override void Load()
         {
@@ -53,13 +52,15 @@ namespace RFVault
                     DependencyUtil.Load(EDependency.UbietyDnsCore);
                 }
                 
-                Database = new DatabaseManager();
+                DatabaseManager.Init();
+                VaultVersionManager.Initialize();
+                VaultManager.Initialize();
                 
                 //Load RFRocketLibrary Events
                 EventBus.Load();
                 
-                UnturnedEvent.OnPlayerChangedEquipment += PlayerEvent.OnEquipmentChanged;
-                UnturnedEvent.OnPlayerChangedGesture += PlayerEvent.OnGestureChanged;
+                // UnturnedEvent.OnPlayerChangedEquipment += PlayerEvent.OnEquipmentChanged;
+                // UnturnedEvent.OnPlayerChangedGesture += PlayerEvent.OnGestureChanged;
                 UnturnedEvent.OnPrePlayerTookItem += PlayerEvent.OnPreItemTook;
                 UnturnedEvent.OnPrePlayerDraggedItem += PlayerEvent.OnPreItemDragged;
                 UnturnedEvent.OnPrePlayerSwappedItem += PlayerEvent.OnPreItemSwapped;
@@ -76,8 +77,8 @@ namespace RFVault
         {
             if (Conf.Enabled)
             {
-                UnturnedEvent.OnPlayerChangedEquipment -= PlayerEvent.OnEquipmentChanged;
-                UnturnedEvent.OnPlayerChangedGesture -= PlayerEvent.OnGestureChanged;
+                // UnturnedEvent.OnPlayerChangedEquipment -= PlayerEvent.OnEquipmentChanged;
+                // UnturnedEvent.OnPlayerChangedGesture -= PlayerEvent.OnGestureChanged;
                 UnturnedEvent.OnPrePlayerTookItem -= PlayerEvent.OnPreItemTook;
                 UnturnedEvent.OnPrePlayerDraggedItem -= PlayerEvent.OnPreItemDragged;
                 UnturnedEvent.OnPrePlayerSwappedItem -= PlayerEvent.OnPreItemSwapped;
@@ -89,7 +90,7 @@ namespace RFVault
             Logger.LogWarning($"[{Name}] Plugin unloaded successfully!");
         }
 
-        public override TranslationList DefaultTranslations => new TranslationList
+        public override TranslationList DefaultTranslations => new()
         {
             {$"{EResponse.BLACKLIST}", "[RFVault] BLACKLIST: {0} ({1})"},
             {$"{EResponse.INVALID_PARAMETER}", "[RFVault] Invalid parameter! Usage: {0}"},
@@ -108,6 +109,7 @@ namespace RFVault
             {$"{EResponse.PLAYER_VAULT_NOT_FOUND}", "[RFVault] {0} doesn't have {1} Vault!"},
             {$"{EResponse.ADMIN_VAULT_CLEAR}", "[RFVault] Successfully cleared {0}'s {1} Vault"},
             {$"{EResponse.VAULT_CLEAR}", "[RFVault] Successfully cleared {0} Vault!"},
+            {$"{EResponse.VAULT_BUSY}", "[RFVault] Someone is using this vault! Please wait until they are finished!"},
             {$"{EResponse.PLAYER_NOT_FOUND}", "[RFVault] Can't find player under name {0}!"},
         };
     }

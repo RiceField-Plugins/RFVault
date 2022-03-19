@@ -29,7 +29,7 @@ namespace RFVault.Commands
             }
 
             var player = (UnturnedPlayer) context.Player;
-            var pComponent = player.GetPlayerComponent();
+            var cPlayer = player.GetPlayerComponent();
 
             if (player.IsInVehicle)
             {
@@ -41,7 +41,7 @@ namespace RFVault.Commands
 
             if (context.CommandRawArguments.Length == 0)
             {
-                if (pComponent.SelectedVault == null)
+                if (cPlayer.SelectedVault == null)
                 {
                     if (VaultUtil.GetVaults(player).Count == 0)
                     {
@@ -57,16 +57,24 @@ namespace RFVault.Commands
                     return;
                 }
 
-                if (!player.HasPermission(pComponent.SelectedVault.Permission))
+                if (!player.HasPermission(cPlayer.SelectedVault.Permission))
                 {
                     await ThreadUtil.RunOnGameThreadAsync(() => ChatHelper.Say(context.Player,
-                        Plugin.Inst.Translate(EResponse.NO_PERMISSION.ToString(), pComponent.SelectedVault.Name),
+                        Plugin.Inst.Translate(EResponse.NO_PERMISSION.ToString(), cPlayer.SelectedVault.Name),
                         Plugin.MsgColor,
                         Plugin.Conf.AnnouncerIconUrl));
                     return;
                 }
 
-                await VaultUtil.OpenVaultAsync(player, pComponent.SelectedVault);
+                if (VaultUtil.IsVaultBusy(player.CSteamID.m_SteamID, cPlayer.SelectedVault))
+                {
+                    await ThreadUtil.RunOnGameThreadAsync(() => ChatHelper.Say(context.Player,
+                        Plugin.Inst.Translate(EResponse.VAULT_BUSY.ToString()), Plugin.MsgColor,
+                        Plugin.Conf.AnnouncerIconUrl));
+                    return;
+                }
+
+                await VaultUtil.OpenVaultAsync(player, cPlayer.SelectedVault);
             }
 
             if (context.CommandRawArguments.Length == 1)
@@ -88,7 +96,7 @@ namespace RFVault.Commands
                     return;
                 }
 
-                if (pComponent.IsProcessingVault)
+                if (cPlayer.PlayerVaultItems != null)
                 {
                     await ThreadUtil.RunOnGameThreadAsync(() => ChatHelper.Say(context.Player,
                         Plugin.Inst.Translate(EResponse.VAULT_PROCESSING.ToString()), Plugin.MsgColor,
@@ -96,6 +104,14 @@ namespace RFVault.Commands
                     return;
                 }
 
+                if (VaultUtil.IsVaultBusy(player.CSteamID.m_SteamID, vault))
+                {
+                    await ThreadUtil.RunOnGameThreadAsync(() => ChatHelper.Say(context.Player,
+                        Plugin.Inst.Translate(EResponse.VAULT_BUSY.ToString()), Plugin.MsgColor,
+                        Plugin.Conf.AnnouncerIconUrl));
+                    return;
+                }
+                
                 await VaultUtil.OpenVaultAsync(player, vault);
             }
         }

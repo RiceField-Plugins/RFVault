@@ -5,18 +5,20 @@ using RFVault.DatabaseManagers;
 using RFVault.Enums;
 using RFVault.Helpers;
 using RFVault.Models;
+using RFVault.Utils;
+using Rocket.Unturned.Player;
 using SDG.Unturned;
 using Steamworks;
 using ThreadUtil = RFRocketLibrary.Utils.ThreadUtil;
 
 namespace RFVault.Commands
 {
-    [AllowedCaller(Rocket.API.AllowedCaller.Both)]
-    [RFRocketLibrary.Plugins.CommandName("adminvaultclear")]
-    [Permissions("adminvaultclear")]
-    [Aliases("adminlockerclear")]
-    [CommandInfo("Clear selected player vault.", "/adminvaultclear <playerId|playerName> <vaultName>")]
-    public class AdminVaultClearCommand : RocketCommand
+    [AllowedCaller(Rocket.API.AllowedCaller.Player)]
+    [RFRocketLibrary.Plugins.CommandName("adminvault")]
+    [Permissions("adminvault")]
+    [Aliases("adminlocker")]
+    [CommandInfo("Open any player vault.", "/adminvault <playerId|playerName> <vaultName>")]
+    public class AdminVaultCommand : RocketCommand
     {
         public override async Task ExecuteAsync(CommandContext context)
         {
@@ -48,27 +50,15 @@ namespace RFVault.Commands
                     return;
                 }
 
-                playerVault.VaultContent = new ItemsWrapper();
-                var player = PlayerTool.getPlayer(new CSteamID(steamId));
-                if (player != null)
+                if (VaultUtil.IsVaultBusy(playerVault.SteamId, requestedVault))
                 {
-                    var cPlayer = player.GetComponent<PlayerComponent>();
-                    if (cPlayer.PlayerVault != null && cPlayer.PlayerVault.VaultName == requestedVault.Name)
-                    {
-                        if (cPlayer.PlayerVaultItems != null)
-                        {
-                            cPlayer.PlayerVaultItems = null;
-                            player.inventory.closeStorageAndNotifyClient();
-                        }
-
-                        cPlayer.PlayerVault.VaultContent = new ItemsWrapper();
-                    }
+                    await ThreadUtil.RunOnGameThreadAsync(() => ChatHelper.Say(context.Player,
+                        Plugin.Inst.Translate(EResponse.VAULT_BUSY.ToString()), Plugin.MsgColor,
+                        Plugin.Conf.AnnouncerIconUrl));
+                    return;
                 }
-
-                await VaultManager.UpdateAsync(playerVault);
-                await ThreadUtil.RunOnGameThreadAsync(() => ChatHelper.Say(context.Player,
-                    Plugin.Inst.Translate(EResponse.ADMIN_VAULT_CLEAR.ToString(), steamId,
-                        requestedVault.Name), Plugin.MsgColor, Plugin.Conf.AnnouncerIconUrl));
+                
+                await VaultUtil.AdminOpenVaultAsync((UnturnedPlayer) context.Player, playerVault);
             }
             else
             {
@@ -92,23 +82,15 @@ namespace RFVault.Commands
                     return;
                 }
 
-                playerVault.VaultContent = new ItemsWrapper();
-                var cPlayer = player.GetComponent<PlayerComponent>();
-                if (cPlayer.PlayerVault != null && cPlayer.PlayerVault.VaultName == requestedVault.Name)
+                if (VaultUtil.IsVaultBusy(playerVault.SteamId, requestedVault))
                 {
-                    if (cPlayer.PlayerVaultItems != null)
-                    {
-                        cPlayer.PlayerVaultItems = null;
-                        player.inventory.closeStorageAndNotifyClient();
-                    }
-
-                    cPlayer.PlayerVault.VaultContent = new ItemsWrapper();
+                    await ThreadUtil.RunOnGameThreadAsync(() => ChatHelper.Say(context.Player,
+                        Plugin.Inst.Translate(EResponse.VAULT_BUSY.ToString()), Plugin.MsgColor,
+                        Plugin.Conf.AnnouncerIconUrl));
+                    return;
                 }
-
-                await VaultManager.UpdateAsync(playerVault);
-                await ThreadUtil.RunOnGameThreadAsync(() => ChatHelper.Say(context.Player,
-                    Plugin.Inst.Translate(EResponse.ADMIN_VAULT_CLEAR.ToString(),
-                        cPlayer.Player.CharacterName, requestedVault.Name), Plugin.MsgColor, Plugin.Conf.AnnouncerIconUrl));
+                
+                await VaultUtil.AdminOpenVaultAsync((UnturnedPlayer) context.Player, playerVault);
             }
         }
     }

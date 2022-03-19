@@ -19,5 +19,18 @@ namespace RFVault.Models
             BypassPermission = bypassPermission;
             Items = items;
         }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is not Blacklist blacklist)
+                return false;
+
+            return blacklist.BypassPermission == BypassPermission;
+        }
+
+        public override int GetHashCode()
+        {
+            return BypassPermission.GetHashCode();
+        }
     }
 }

@@ -36,7 +36,7 @@ namespace RFVault.Commands
             }
 
             await context.ReplyAsync(Plugin.Inst.Translate(EResponse.MIGRATION_START.ToString(), "RFLocker", to));
-            await Plugin.Inst.Database.VaultManager.MigrateLockerAsync(to);
+            await VaultManager.MigrateLockerAsync(to);
             await context.ReplyAsync(Plugin.Inst.Translate(EResponse.MIGRATION_FINISH.ToString()));
         }
     }

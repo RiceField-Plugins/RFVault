@@ -41,7 +41,7 @@ namespace RFVault.Commands
             }
 
             await context.ReplyAsync(Plugin.Inst.Translate(EResponse.MIGRATION_START.ToString(), from, to));
-            await Plugin.Inst.Database.VaultManager.MigrateAsync(from, to);
+            await VaultManager.MigrateAsync(from, to);
             await context.ReplyAsync(Plugin.Inst.Translate(EResponse.MIGRATION_FINISH.ToString()));
         }
     }

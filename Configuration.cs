@@ -14,8 +14,8 @@ namespace RFVault
         public string MessageColor;
         public string AnnouncerIconUrl;
         public Trash Trash;
-        public List<Vault> Vaults;
-        public List<Blacklist> BlacklistedItems;
+        public HashSet<Vault> Vaults;
+        public HashSet<Blacklist> BlacklistedItems;
 
         public void LoadDefaults()
         {
@@ -26,15 +26,17 @@ namespace RFVault
             MessageColor = "magenta";
             AnnouncerIconUrl = "https://cdn.jsdelivr.net/gh/RiceField-Plugins/UnturnedImages@images/plugin/RFVault/RFVault.png";
             Trash = new Trash(10, 10);
-            Vaults = new List<Vault>
+            Vaults = new HashSet<Vault>
             {
-                new Vault("Small", "vault.small", 4, 4),
-                new Vault("Medium", "vault.medium", 7, 7),
+                new("Small", "vault.small", 4, 4),
+                new("Medium", "vault.medium", 7, 7),
+                new("VIPs", "vault.vip", 10, 10),
+                new("VIPs2", "vault.vip2", 10, 10),
             };
-            BlacklistedItems = new List<Blacklist>
+            BlacklistedItems = new HashSet<Blacklist>
             {
-                new Blacklist("vaultbypass.example", new List<ushort> {1, 2}),
-                new Blacklist("vaultbypass.example1", new List<ushort> {3, 4}),
+                new("vaultbypass.example", new List<ushort> {1, 2}),
+                new("vaultbypass.example1", new List<ushort> {3, 4}),
             };
         }
     }
