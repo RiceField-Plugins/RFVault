@@ -1,28 +1,26 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
-using RFRocketLibrary.Plugins;
-using RFRocketLibrary.Utils;
 using RFVault.Enums;
-using RFVault.Helpers;
 using RFVault.Utils;
+using Rocket.API;
 using Rocket.Unturned.Player;
+using RocketExtensions.Models;
+using RocketExtensions.Plugins;
 
 namespace RFVault.Commands
 {
-    [AllowedCaller(Rocket.API.AllowedCaller.Player)]
-    [CommandName("vaults")]
-    [Permissions("vaults")]
-    [Aliases("lockers")]
+    [CommandActor(AllowedCaller.Player)]
+    [CommandPermissions("vaults")]
+    [CommandAliases("lockers")]
     [CommandInfo("Get a list of available vaults.", "/vaults")]
     public class VaultsCommand : RocketCommand
     {
-        public override async Task ExecuteAsync(CommandContext context)
+        public override async Task Execute(CommandContext context)
         {
             if (context.CommandRawArguments.Length != 0)
             {
-                await ThreadUtil.RunOnGameThreadAsync(() => ChatHelper.Say(context.Player,
-                    Plugin.Inst.Translate(EResponse.INVALID_PARAMETER.ToString(), Syntax), Plugin.MsgColor,
-                    Plugin.Conf.AnnouncerIconUrl));
+                await context.ReplyAsync(RFVault.Plugin.Inst.Translate(EResponse.INVALID_PARAMETER.ToString(), Syntax), RFVault.Plugin.MsgColor,
+                    RFVault.Plugin.Conf.AnnouncerIconUrl);
                 return;
             }
 
@@ -31,9 +29,8 @@ namespace RFVault.Commands
             var vaults = VaultUtil.GetVaults(player);
             if (vaults.Count != 0)
                 list = string.Join(", ", (from t in vaults select $"{t.Name}").ToArray());
-            await ThreadUtil.RunOnGameThreadAsync(() => ChatHelper.Say(context.Player,
-                Plugin.Inst.Translate(EResponse.VAULTS.ToString(), list), Plugin.MsgColor,
-                Plugin.Conf.AnnouncerIconUrl));
+            await context.ReplyAsync(RFVault.Plugin.Inst.Translate(EResponse.VAULTS.ToString(), list), RFVault.Plugin.MsgColor,
+                RFVault.Plugin.Conf.AnnouncerIconUrl);
         }
     }
 }

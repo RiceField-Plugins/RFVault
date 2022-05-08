@@ -1,7 +1,8 @@
 using System;
 using System.IO;
+using RFRocketLibrary.API.Interfaces;
+using RFRocketLibrary.Models;
 using RFVault.Enums;
-using Rocket.Core.Logging;
 
 namespace RFVault.DatabaseManagers
 {
@@ -14,10 +15,12 @@ namespace RFVault.DatabaseManagers
         internal static string MySql_TableName;
         internal static string MySql_ConnectionString;
 
+        internal static ISerialQueue Queue;
         internal static void Init()
         {
             LiteDB_FilePath = Path.Combine(Plugin.Inst.Directory, LiteDB_FileName);
             LiteDB_ConnectionString = $"Filename={LiteDB_FilePath};Connection=shared;";
+            Queue = new SerialQueue();
             if (Plugin.Conf.Database == EDatabase.MYSQL)
             {
                 var index = Plugin.Conf.MySqlConnectionString.LastIndexOf("TABLENAME", StringComparison.Ordinal);

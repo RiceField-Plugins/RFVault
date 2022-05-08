@@ -38,7 +38,6 @@
         <Compile Include="Commands\VaultCommand.cs" />
         <Compile Include="Commands\VaultCopyCommand.cs" />
         <Compile Include="Commands\VaultMigrateCommand.cs" />
-        <Compile Include="Commands\VaultMigrateLockerCommand.cs" />
         <Compile Include="Commands\VaultsCommand.cs" />
         <Compile Include="Commands\VaultSetCommand.cs" />
         <Compile Include="Commands\VaultTransferCommand.cs" />
@@ -88,7 +87,7 @@
       <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed">
         <HintPath>..\..\..\Libraries\RFRocketMod\Newtonsoft.Json.dll</HintPath>
       </Reference>
-      <Reference Include="RFRocketLibrary, Version=1.0.1.0, Culture=neutral, PublicKeyToken=null">
+      <Reference Include="RFRocketLibrary">
         <HintPath>..\..\..\Libraries\RFRocketMod\RFRocketLibrary.dll</HintPath>
       </Reference>
       <Reference Include="Rocket.API, Version=4.9.3.4, Culture=neutral, PublicKeyToken=null">

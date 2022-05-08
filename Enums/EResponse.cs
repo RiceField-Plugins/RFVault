@@ -20,6 +20,7 @@ namespace RFVault.Enums
         ADMIN_VAULT_CLEAR,
         VAULT_CLEAR,
         PLAYER_NOT_FOUND,
-        VAULT_BUSY
+        VAULT_BUSY,
+        VAULT_SYSTEM_BUSY
     }
 }

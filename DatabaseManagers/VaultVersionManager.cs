@@ -3,16 +3,10 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
-using RFRocketLibrary.Models;
 using RFRocketLibrary.Storages;
-using RFRocketLibrary.Utils;
 using RFVault.Enums;
 using RFVault.Models;
-using RFVault.Utils;
 using Rocket.Core.Logging;
-#if DEBUG
-using Extensions = RFLocker.Utils.Extensions;
-#endif
 
 namespace RFVault.DatabaseManagers
 {
@@ -24,7 +18,7 @@ namespace RFVault.DatabaseManagers
 
 
         private const string Json_FileName = "vault_version.json";
-        private static DataStore<VaultVersion> Json_DataStore { get; set; }
+        private static JsonDataStore<VaultVersion> Json_DataStore { get; set; }
 
         private static string MySql_TableName => $"{DatabaseManager.MySql_TableName}_version";
 
@@ -38,7 +32,7 @@ namespace RFVault.DatabaseManagers
                 switch (Plugin.Conf.Database)
                 {
                     case EDatabase.JSON:
-                        Json_DataStore = new DataStore<VaultVersion>(Plugin.Inst.Directory, Json_FileName);
+                        Json_DataStore = new JsonDataStore<VaultVersion>(Plugin.Inst.Directory, Json_FileName);
                         JSON_Reload();
                         break;
                     case EDatabase.MYSQL:
@@ -207,7 +201,7 @@ namespace RFVault.DatabaseManagers
                 switch (from)
                 {
                     case EDatabase.JSON:
-                        Json_DataStore = new DataStore<VaultVersion>(Plugin.Inst.Directory, Json_FileName);
+                        Json_DataStore = new JsonDataStore<VaultVersion>(Plugin.Inst.Directory, Json_FileName);
                         JSON_Reload(true);
                         switch (to)
                         {
@@ -240,7 +234,7 @@ namespace RFVault.DatabaseManagers
                         switch (to)
                         {
                             case EDatabase.JSON:
-                                Json_DataStore = new DataStore<VaultVersion>(Plugin.Inst.Directory, Json_FileName);
+                                Json_DataStore = new JsonDataStore<VaultVersion>(Plugin.Inst.Directory, Json_FileName);
                                 await Json_DataStore.SaveAsync(MigrateCollection);
                                 break;
                             default:

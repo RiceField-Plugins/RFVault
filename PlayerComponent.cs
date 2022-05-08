@@ -13,11 +13,22 @@ namespace RFVault
 {
     public class PlayerComponent : UnturnedPlayerComponent
     {
+        internal bool IsBusy { get; set; }
         internal Vault SelectedVault { get; set; }
         internal PlayerVault PlayerVault { get; set; }
         internal Items PlayerVaultItems { get; set; }
 
         protected override void Load()
+        {
+            LoadInternal();
+        }
+
+        protected override void Unload()
+        {
+            UnloadInternal();
+        }
+
+        internal void LoadInternal()
         {
             var vault = VaultUtil.GetVaults(Player).FirstOrDefault();
             if (vault != null)
@@ -26,9 +37,12 @@ namespace RFVault
             Player.Player.inventory.onInventoryResized += OnInventoryResized;
         }
 
-        protected override void Unload()
+        internal void UnloadInternal()
         {
             Player.Player.inventory.onInventoryResized -= OnInventoryResized;
+            
+            if (PlayerVaultItems != null)
+                OnInventoryResized(PlayerInventory.STORAGE, 0, 0);
         }
 
         private void OnInventoryResized(byte page, byte newwidth, byte newheight)
@@ -36,21 +50,22 @@ namespace RFVault
             // Logger.LogWarning($"[DEBUG] OnInventoryResized {Player.CharacterName} page:{page} newwidth:{newwidth} newheight:{newheight}");
             if (page == PlayerInventory.STORAGE && newwidth == 0 && newheight == 0 && PlayerVault != null && PlayerVaultItems != null)
             {
-                var itemsWrapper = ItemsWrapper.Create(PlayerVaultItems);
-                PlayerVault.VaultContent = itemsWrapper;
-                // Logger.LogWarning($"[DEBUG] OnInventoryResized {Player.CharacterName} PlayerVaultItems:{PlayerVaultItems.items.Count}");
-                Task.Run(async () =>
+                if (!IsBusy)
+                {
+                    var itemsWrapper = ItemsWrapper.Create(PlayerVaultItems);
+                    PlayerVault.VaultContent = itemsWrapper;
+                }
+                
+                IsBusy = true;
+                DatabaseManager.Queue.Enqueue(async () =>
                 {
                     await VaultManager.UpdateAsync(PlayerVault);
+                    PlayerVaultItems.clear();
+                    PlayerVaultItems.items.TrimExcess();
                     PlayerVault = null;
                     PlayerVaultItems = null;
-                }).Forget(
-                    e =>
-                    {
-                        Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] OnStorageUpdated: {e.Message}");
-                        Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: {e}");
-                    });
-                return;
+                    IsBusy = false;
+                });
             }
         }
     }

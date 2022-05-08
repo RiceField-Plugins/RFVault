@@ -1,10 +1,4 @@
 ﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-using RFRocketLibrary.Models;
-using RFRocketLibrary.Utils;
-using RFVault.Enums;
-using RFVault.Models;
 using RFVault.Utils;
 using Rocket.Core.Logging;
 using Rocket.Unturned.Player;
@@ -19,6 +13,8 @@ namespace RFVault.EventListeners
         public static void OnPreItemTook(Player uplayer, byte x, byte y, uint instanceID, byte to_x, byte to_y,
             byte to_rot, byte to_page, ItemData itemData, ref bool shouldAllow)
         {
+            if (!shouldAllow)
+                return;
             // Logger.LogWarning(
             //     $"[DEBUG] OnPreItemTook {uplayer.channel.owner.playerID.characterName} x:{x} y:{y} instanceID:{instanceID} to_x:{to_x} to_y:{to_y} to_rot:{to_rot} to_page:{to_page} id:{itemData.item.id} allow:{shouldAllow}");
             try
@@ -26,22 +22,18 @@ namespace RFVault.EventListeners
                 var player = UnturnedPlayer.FromPlayer(uplayer);
                 var cPlayer = player.GetPlayerComponent();
                 if (cPlayer.PlayerVaultItems == null)
+                    return;
+
+                if (cPlayer.IsBusy)
                 {
-                    shouldAllow = true;
+                    shouldAllow = false;
                     return;
                 }
 
-                if (to_page != 7)
-                {
-                    shouldAllow = true;
+                if (to_page != PlayerInventory.STORAGE)
                     return;
-                }
-
-                var itemJar = new ItemJar(to_x, to_y, to_rot, itemData.item);
-                if (!VaultUtil.IsBlacklisted(player, itemJar.item.id))
-                    return;
-
-                shouldAllow = false;
+                
+                shouldAllow = !VaultUtil.IsBlacklisted(player, itemData.item.id);
             }
             catch (Exception e)
             {
@@ -51,77 +43,11 @@ namespace RFVault.EventListeners
             }
         }
 
-        // internal static StateUpdated OnVaultStorageUpdated(UnturnedPlayer player, Vault vault, PlayerVault loadedVault,
-        //     Items vaultItems)
-        // {
-        //     return () =>
-        //     {
-        //         var pComponent = player.GetComponent<PlayerComponent>();
-        //         loadedVault.VaultContent.Height = vault.Height;
-        //         loadedVault.VaultContent.Width = vault.Width;
-        //         loadedVault.VaultContent.Items = vaultItems.items.Select(ItemJarWrapper.Create).ToList();
-        //         if (Plugin.Conf.Database != EDatabase.JSON)
-        //             pComponent.CachedVault = loadedVault;
-        //         Task.Run(async () =>
-        //             await VaultManager.UpdateAsync(player.CSteamID.m_SteamID, vault.Name)).Forget(
-        //             e =>
-        //             {
-        //                 Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultManager UpdateAsync: {e.Message}");
-        //                 Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: {e}");
-        //             });
-        //     };
-        // }
-
-        // public static void OnEquipmentChanged(Player uPlayer)
-        // {
-        //     try
-        //     {
-        //         var player = UnturnedPlayer.FromPlayer(uPlayer);
-        //         var pComponent = player.GetPlayerComponent();
-        //         if (!pComponent.CachedVaultItems ==)
-        //             return;
-        //         
-        //         pComponent.IsSubmitting = false;
-        //         pComponent.IsProcessingVault = false;
-        //         player.Inventory.updateItems(7, new Items(7));
-        //         if (Plugin.Conf.DebugMode)
-        //             Logger.LogWarning($"[{Plugin.Inst.Name}] [DEBUG] {player.CharacterName} is closing a vault");
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] PlayerEvent OnEquipmentChanged: {e.Message}");
-        //         Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: {e}");
-        //     }
-        // }
-
-        // internal static void OnGestureChanged(Player uPlayer, EPlayerGesture gesture)
-        // {
-        //     try
-        //     {
-        //         if (gesture != EPlayerGesture.INVENTORY_STOP)
-        //             return;
-        //         
-        //         var player = UnturnedPlayer.FromPlayer(uPlayer);
-        //         var pComponent = player.GetPlayerComponent();
-        //         if (pComponent.IsSubmitting)
-        //             return;
-        //         
-        //         pComponent.IsSubmitting = false;
-        //         pComponent.IsProcessingVault = false;
-        //         player.Inventory.updateItems(7, null);
-        //         if (Plugin.Conf.DebugMode)
-        //             Logger.LogWarning($"[{Plugin.Inst.Name}] [DEBUG] {player.CharacterName} is closing a vault");
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] PlayerEvent OnGesture: {e.Message}");
-        //         Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: {e}");
-        //     }
-        // }
-
         public static void OnPreItemDragged(PlayerInventory inventory, byte page_0, byte x_0, byte y_0, byte page_1,
             byte x_1, byte y_1, byte rot_1, ref bool shouldAllow)
         {
+            if (!shouldAllow)
+                return;
             // Logger.LogWarning(
             //     $"[DEBUG] OnPreItemDragged {inventory.channel.owner.playerID.characterName} page_0:{page_0} x_0:{x_0} y_0:{y_0} page_1:{page_1} x_1:{x_1} y_1:{y_1} rot_1:{rot_1} shouldAllow:{shouldAllow}");
             try
@@ -132,6 +58,12 @@ namespace RFVault.EventListeners
                 if (cPlayer.PlayerVaultItems == null)
                     return;
 
+                if (cPlayer.IsBusy)
+                {
+                    shouldAllow = false;
+                    return;
+                }
+
                 // Bug fix: Disallow if player storing primary/secondary item to storage or vice versa
                 if ((page_0 == 0 || page_0 == 1) && page_1 == 7 || (page_1 == 0 || page_1 == 1) && page_0 == 7)
                 {
@@ -140,17 +72,15 @@ namespace RFVault.EventListeners
                 }
 
                 // Allow if player is not dealing with Storage page
-                if (page_1 != 7)
+                if (page_1 != PlayerInventory.STORAGE)
                     return;
 
                 var index = inventory.items[page_0].getIndex(x_0, y_0);
-                if (index == byte.MaxValue || page_1 >= PlayerInventory.PAGES - 1 || inventory.items[page_1] == null ||
-                    inventory.getItemCount(page_1) >= 200)
+                if (index == byte.MaxValue)
                     return;
 
                 var itemJar = inventory.items[page_0].getItem(index);
-                if (itemJar == null || !inventory.checkSpaceDrag(page_1, x_0, y_0, itemJar.rot, x_1, y_1, rot_1,
-                        itemJar.size_x, itemJar.size_y, page_0 == page_1))
+                if (itemJar == null)
                     return;
 
                 // Disallow if item is in blacklist
@@ -166,16 +96,25 @@ namespace RFVault.EventListeners
         public static void OnPreItemSwapped(PlayerInventory inventory, byte page_0, byte x_0, byte y_0, byte rot_0,
             byte page_1, byte x_1, byte y_1, byte rot_1, ref bool shouldAllow)
         {
+            if (!shouldAllow)
+                return;
             // Logger.LogWarning(
             //     $"[DEBUG] OnPreItemSwapped {inventory.channel.owner.playerID.characterName} page_0:{page_0} x_0:{x_0} y_0:{y_0} rot_0:{rot_0} page_1:{page_1} x_1:{x_1} y_1:{y_1} rot_1:{rot_1} shouldAllow:{shouldAllow}");
             try
             {
                 var player = UnturnedPlayer.FromPlayer(inventory.player);
                 var cPlayer = player.GetPlayerComponent();
+                
                 // Allow if player is not accessing virtual locker
                 if (cPlayer.PlayerVaultItems == null)
                     return;
 
+                if (cPlayer.IsBusy)
+                {
+                    shouldAllow = false;
+                    return;
+                }
+                
                 // Bug fix: Disallow if player storing primary/secondary item to storage or vice versa
                 if ((page_0 == 0 || page_0 == 1) && page_1 == 7 || (page_1 == 0 || page_1 == 1) && page_0 == 7)
                 {
@@ -184,7 +123,7 @@ namespace RFVault.EventListeners
                 }
 
                 // Run if player is not dealing with Storage page
-                if (page_1 != 7)
+                if (page_1 != PlayerInventory.STORAGE)
                     return;
 
                 var index = inventory.items[page_0].getIndex(x_0, y_0);
@@ -192,6 +131,9 @@ namespace RFVault.EventListeners
                     return;
 
                 var itemJar = inventory.items[page_0].getItem(index);
+                if (itemJar == null)
+                    return;
+                
                 // Disallow if item is in blacklist
                 shouldAllow = !VaultUtil.IsBlacklisted(player, itemJar.item.id);
             }

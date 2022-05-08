@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using RFRocketLibrary.Models;
 using RFVault.DatabaseManagers;
 using RFVault.Enums;
 using RFVault.Helpers;
@@ -9,8 +11,9 @@ using RFVault.Models;
 using Rocket.API;
 using Rocket.Core.Logging;
 using Rocket.Unturned.Player;
+using RocketExtensions.Models;
+using RocketExtensions.Utilities;
 using SDG.Unturned;
-using ThreadUtil = RFRocketLibrary.Utils.ThreadUtil;
 
 namespace RFVault.Utils
 {
@@ -20,7 +23,8 @@ namespace RFVault.Utils
         {
             try
             {
-                return Plugin.Conf.Vaults.Where(vault => player.HasPermission(vault.Permission ?? string.Empty)).ToList();
+                return Plugin.Conf.Vaults.Where(vault => player.HasPermission(vault.Permission ?? string.Empty))
+                    .ToList();
             }
             catch (Exception e)
             {
@@ -58,12 +62,12 @@ namespace RFVault.Utils
         {
             try
             {
-                    await VaultManager.AddAsync(new PlayerVault
-                    {
-                        SteamId = player.CSteamID.m_SteamID,
-                        VaultName = vault.Name
-                    });
-                await ThreadUtil.RunOnGameThreadAsync(() => LoadVault(player, vault));
+                await DatabaseManager.Queue.Enqueue(async () => await VaultManager.AddAsync(new PlayerVault
+                {
+                    SteamId = player.CSteamID.m_SteamID,
+                    VaultName = vault.Name
+                }))!;
+                await LoadVaultAsync(player, vault);
                 if (Plugin.Conf.DebugMode)
                     Logger.LogWarning(
                         $"[{Plugin.Inst.Name}] [DEBUG] {player.CharacterName} is accessing {vault.Name} Vault");
@@ -75,37 +79,34 @@ namespace RFVault.Utils
             }
         }
 
-        internal static async Task AdminOpenVaultAsync(UnturnedPlayer player, PlayerVault playerVault)
+        internal static void AdminOpenVault(UnturnedPlayer player, PlayerVault playerVault)
         {
             try
             {
-                await ThreadUtil.RunOnGameThreadAsync(() => AdminLoadVault(player, playerVault));
+                AdminLoadVault(player, playerVault);
                 if (Plugin.Conf.DebugMode)
                     Logger.LogWarning(
                         $"[{Plugin.Inst.Name}] [DEBUG] {player.CharacterName} is accessing {playerVault.SteamId}'s {playerVault.VaultName} Vault");
             }
             catch (Exception e)
             {
-                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] AdminOpenVaultAsync: {e.Message}");
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] AdminOpenVault: {e.Message}");
                 Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: {e}");
             }
         }
 
-        internal static async Task OpenVirtualTrashAsync(UnturnedPlayer player)
+        internal static void OpenVirtualTrash(UnturnedPlayer player)
         {
             try
             {
                 var cPlayer = player.GetPlayerComponent();
-                await ThreadUtil.RunOnGameThreadAsync(() =>
-                {
-                    var lockerItems = new Items(7);
-                    cPlayer.PlayerVaultItems = lockerItems;
-                    lockerItems.resize(Plugin.Conf.Trash.Width, Plugin.Conf.Trash.Height);
-                    player.Player.inventory.isStoring = true;
-                    player.Player.inventory.storage = null;
-                    player.Player.inventory.updateItems(7, lockerItems);
-                    player.Player.inventory.sendStorage();
-                });
+                var lockerItems = new Items(7);
+                cPlayer.PlayerVaultItems = lockerItems;
+                lockerItems.resize(Plugin.Conf.Trash.Width, Plugin.Conf.Trash.Height);
+                player.Player.inventory.isStoring = true;
+                player.Player.inventory.storage = null;
+                player.Player.inventory.updateItems(7, lockerItems);
+                player.Player.inventory.sendStorage();
             }
             catch (Exception e)
             {
@@ -114,33 +115,59 @@ namespace RFVault.Utils
             }
         }
 
-        private static void LoadVault(UnturnedPlayer player, Vault vault)
+        private static async Task LoadVaultAsync(UnturnedPlayer player, Vault vault)
         {
+            IEnumerator SendItemsOverTime(PlayerComponent component, Items items)
+            {
+                var toRemove = new List<ItemJarWrapper>();
+                foreach (var itemJarWrapper in component.PlayerVault.VaultContent.Items)
+                {
+                    if (items.width == 0 || items.height == 0)
+                        goto Break;
+
+                    // if (itemJarWrapper.X > vault.Width || itemJarWrapper.Y > vault.Height)
+                    // {
+                    //     ItemManager.dropItem(itemJarWrapper.Item.ToItem(), player.Position, true, true, true);
+                    //     toRemove.Add(itemJarWrapper);
+                    // }
+                    // else
+                    //     items.addItem(itemJarWrapper.X, itemJarWrapper.Y, itemJarWrapper.Rotation,
+                    //         itemJarWrapper.Item.ToItem());
+
+                    if (!items.tryAddItem(itemJarWrapper.Item.ToItem()))
+                    {
+                        ItemManager.dropItem(itemJarWrapper.Item.ToItem(), player.Position, true, true, true);
+                        toRemove.Add(itemJarWrapper);
+                    }
+
+                    yield return null;
+                }
+
+                component.IsBusy = false;
+
+                Break:
+                foreach (var itemJarWrapper in toRemove)
+                    component.PlayerVault.VaultContent.Items.Remove(itemJarWrapper);
+            }
+
             try
             {
                 var cPlayer = player.GetPlayerComponent();
-
-                var vaultItems = new Items(7);
-                vaultItems.resize(vault.Width, vault.Height);
-
-                var loadedVault = VaultManager.Get(player.CSteamID.m_SteamID, vault.Name);
-                
-                foreach (var itemJarWrapper in loadedVault.VaultContent.Items)
-                {
-                    if (itemJarWrapper.X > vault.Width || itemJarWrapper.Y > vault.Height)
-                        ItemManager.dropItem(itemJarWrapper.Item.ToItem(), player.Position, true, true, true);
-                    else
-                        vaultItems.addItem(itemJarWrapper.X, itemJarWrapper.Y, itemJarWrapper.Rotation,
-                            itemJarWrapper.Item.ToItem());
-                }
-
-                player.Player.inventory.isStoring = true;
-                player.Player.inventory.storage = null;
-                player.Player.inventory.updateItems(7, vaultItems);
-                player.Player.inventory.sendStorage();
+                cPlayer.IsBusy = true;
+                var loadedVault = await VaultManager.Get(player.CSteamID.m_SteamID, vault.Name);
                 cPlayer.PlayerVault = loadedVault;
-                cPlayer.PlayerVaultItems = vaultItems;
-                // Logger.LogWarning($"[DEBUG] LoadVault {cPlayer.Player.CharacterName} PlayerVaultItems:{cPlayer.PlayerVaultItems.items.Count}");
+
+                await ThreadTool.RunOnGameThreadAsync(() =>
+                {
+                    var vaultItems = new Items(7);
+                    vaultItems.resize(vault.Width, vault.Height);
+                    cPlayer.PlayerVaultItems = vaultItems;
+                    player.Player.inventory.isStoring = true;
+                    player.Player.inventory.storage = null;
+                    player.Player.inventory.updateItems(7, vaultItems);
+                    player.Player.inventory.sendStorage();
+                    Plugin.Inst.StartCoroutine(SendItemsOverTime(cPlayer, vaultItems));
+                });
             }
             catch (Exception e)
             {
@@ -160,7 +187,8 @@ namespace RFVault.Utils
 
                 foreach (var itemJarWrapper in playerVault.VaultContent.Items)
                 {
-                    if (itemJarWrapper.X > playerVault.VaultContent.Width || itemJarWrapper.Y > playerVault.VaultContent.Height)
+                    if (itemJarWrapper.X > playerVault.VaultContent.Width ||
+                        itemJarWrapper.Y > playerVault.VaultContent.Height)
                         ItemManager.dropItem(itemJarWrapper.Item.ToItem(), player.Position, true, true, true);
                     else
                         vaultItems.addItem(itemJarWrapper.X, itemJarWrapper.Y, itemJarWrapper.Rotation,
@@ -186,7 +214,8 @@ namespace RFVault.Utils
             foreach (var steamPlayer in Provider.clients)
             {
                 var cPlayer = steamPlayer.player.GetComponent<PlayerComponent>();
-                if (cPlayer.PlayerVault != null && cPlayer.PlayerVaultItems != null && cPlayer.PlayerVault.SteamId == owner &&
+                if (cPlayer.PlayerVault != null && cPlayer.PlayerVaultItems != null &&
+                    cPlayer.PlayerVault.SteamId == owner &&
                     cPlayer.PlayerVault.VaultName == vault.Name)
                 {
                     return true;
