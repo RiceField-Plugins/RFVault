@@ -21,7 +21,7 @@ namespace RFVault.EventListeners
             {
                 var player = UnturnedPlayer.FromPlayer(uplayer);
                 var cPlayer = player.GetPlayerComponent();
-                if (cPlayer.PlayerVaultItems == null)
+                if (cPlayer.PlayerVault == null)
                     return;
 
                 if (cPlayer.IsBusy)
@@ -55,7 +55,7 @@ namespace RFVault.EventListeners
                 var player = UnturnedPlayer.FromPlayer(inventory.player);
                 var cPlayer = player.GetPlayerComponent();
                 // Allow if player is not accessing virtual locker
-                if (cPlayer.PlayerVaultItems == null)
+                if (cPlayer.PlayerVault == null)
                     return;
 
                 if (cPlayer.IsBusy)
@@ -106,7 +106,7 @@ namespace RFVault.EventListeners
                 var cPlayer = player.GetPlayerComponent();
                 
                 // Allow if player is not accessing virtual locker
-                if (cPlayer.PlayerVaultItems == null)
+                if (cPlayer.PlayerVault == null)
                     return;
 
                 if (cPlayer.IsBusy)

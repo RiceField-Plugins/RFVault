@@ -21,7 +21,7 @@ namespace RFVault
     {
         private const int Major = 1;
         private const int Minor = 2;
-        private const int Patch = 0;
+        private const int Patch = 1;
 
         public static Plugin Inst;
         public static Configuration Conf;

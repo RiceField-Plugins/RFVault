@@ -99,13 +99,9 @@ namespace RFVault.Utils
         {
             try
             {
-                var cPlayer = player.GetPlayerComponent();
-                var lockerItems = new Items(7);
-                cPlayer.PlayerVaultItems = lockerItems;
-                lockerItems.resize(Plugin.Conf.Trash.Width, Plugin.Conf.Trash.Height);
-                player.Player.inventory.isStoring = true;
-                player.Player.inventory.storage = null;
-                player.Player.inventory.updateItems(7, lockerItems);
+                var trashItems = new Items(7);
+                trashItems.resize(Plugin.Conf.Trash.Width, Plugin.Conf.Trash.Height);
+                player.Player.inventory.updateItems(7, trashItems);
                 player.Player.inventory.sendStorage();
             }
             catch (Exception e)
