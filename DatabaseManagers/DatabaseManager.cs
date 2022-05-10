@@ -16,7 +16,7 @@ namespace RFVault.DatabaseManagers
         internal static string MySql_ConnectionString;
 
         internal static ISerialQueue Queue;
-        internal static void Init()
+        internal static void Initialize()
         {
             LiteDB_FilePath = Path.Combine(Plugin.Inst.Directory, LiteDB_FileName);
             LiteDB_ConnectionString = $"Filename={LiteDB_FilePath};Connection=shared;";

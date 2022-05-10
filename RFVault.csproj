@@ -81,8 +81,8 @@
       <Reference Include="litedbasync, Version=0.0.11.0, Culture=neutral, PublicKeyToken=null">
         <HintPath>..\..\..\Libraries\LiteDB\litedbasync.dll</HintPath>
       </Reference>
-      <Reference Include="MySql.Data, Version=8.0.25.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d">
-        <HintPath>..\..\..\Libraries\Dapper\MySql.Data.8.0.25.dll</HintPath>
+      <Reference Include="MySql.Data">
+        <HintPath>..\..\..\Libraries\MySQL\MySql.Data.dll</HintPath>
       </Reference>
       <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed">
         <HintPath>..\..\..\Libraries\RFRocketMod\Newtonsoft.Json.dll</HintPath>

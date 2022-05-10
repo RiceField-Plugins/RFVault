@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using RFRocketLibrary;
+﻿using RFRocketLibrary;
 using RFRocketLibrary.Enum;
 using RFRocketLibrary.Events;
 using RFRocketLibrary.Utils;
@@ -8,7 +7,6 @@ using RFVault.Enums;
 using RFVault.EventListeners;
 using Rocket.API.Collections;
 using Rocket.API.Extensions;
-using Rocket.Core.Plugins;
 using Rocket.Unturned.Chat;
 using RocketExtensions.Plugins;
 using SDG.Unturned;
@@ -41,10 +39,13 @@ namespace RFVault
                 DependencyUtil.Load(EDependency.LiteDBAsync);
                 DependencyUtil.Load(EDependency.Dapper);
                 DependencyUtil.Load(EDependency.MySqlData);
+                DependencyUtil.Load(EDependency.I18N);
+                DependencyUtil.Load(EDependency.I18NWest);
                 DependencyUtil.Load(EDependency.SystemManagement);
                 DependencyUtil.Load(EDependency.UbietyDnsCore);
+                DependencyUtil.Load(EDependency.ZstdNet);
 
-                DatabaseManager.Init();
+                DatabaseManager.Initialize();
                 VaultVersionManager.Initialize();
                 VaultManager.Initialize();
 
