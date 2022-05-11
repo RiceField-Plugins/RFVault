@@ -11,9 +11,6 @@ using RFVault.Enums;
 using RFVault.Models;
 using RFVault.Utils;
 using Rocket.Core.Logging;
-#if DEBUG
-using Extensions = RFLocker.Utils.Extensions;
-#endif
 
 namespace RFVault.DatabaseManagers
 {

@@ -14,6 +14,7 @@ namespace RFVault
         public string MessageColor;
         public string AnnouncerIconUrl;
         public Trash Trash;
+        public bool AutoSortVault;
         public HashSet<Vault> Vaults;
         public HashSet<Blacklist> BlacklistedItems;
 
@@ -26,6 +27,7 @@ namespace RFVault
             MessageColor = "magenta";
             AnnouncerIconUrl = "https://cdn.jsdelivr.net/gh/RiceField-Plugins/UnturnedImages@images/plugin/RFVault/RFVault.png";
             Trash = new Trash(10, 10);
+            AutoSortVault = false;
             Vaults = new HashSet<Vault>
             {
                 new("Small", "vault.small", 4, 4),

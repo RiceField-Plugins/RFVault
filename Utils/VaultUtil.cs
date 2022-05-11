@@ -43,7 +43,7 @@ namespace RFVault.Utils
                         blacklistItemId == id && !player.HasPermission(blacklistedItem.BypassPermission)));
                 if (!blacklist)
                     return false;
-                var itemAsset = (ItemAsset) Assets.find(EAssetType.ITEM, id);
+                var itemAsset = (ItemAsset)Assets.find(EAssetType.ITEM, id);
                 ChatHelper.Say(player,
                     Plugin.Inst.Translate(EResponse.BLACKLIST.ToString(), itemAsset.itemName, itemAsset.id),
                     Plugin.MsgColor,
@@ -120,20 +120,25 @@ namespace RFVault.Utils
                 {
                     if (items.width == 0 || items.height == 0)
                         goto Break;
-
-                    // if (itemJarWrapper.X > vault.Width || itemJarWrapper.Y > vault.Height)
-                    // {
-                    //     ItemManager.dropItem(itemJarWrapper.Item.ToItem(), player.Position, true, true, true);
-                    //     toRemove.Add(itemJarWrapper);
-                    // }
-                    // else
-                    //     items.addItem(itemJarWrapper.X, itemJarWrapper.Y, itemJarWrapper.Rotation,
-                    //         itemJarWrapper.Item.ToItem());
-
-                    if (!items.tryAddItem(itemJarWrapper.Item.ToItem()))
+                    
+                    if (Plugin.Conf.AutoSortVault)
                     {
-                        ItemManager.dropItem(itemJarWrapper.Item.ToItem(), player.Position, true, true, true);
-                        toRemove.Add(itemJarWrapper);
+                        if (!items.tryAddItem(itemJarWrapper.Item.ToItem()))
+                        {
+                            ItemManager.dropItem(itemJarWrapper.Item.ToItem(), player.Position, true, true, true);
+                            toRemove.Add(itemJarWrapper);
+                        }
+                    }
+                    else
+                    {
+                        if (itemJarWrapper.X > vault.Width || itemJarWrapper.Y > vault.Height)
+                        {
+                            ItemManager.dropItem(itemJarWrapper.Item.ToItem(), player.Position, true, true, true);
+                            toRemove.Add(itemJarWrapper);
+                        }
+                        else
+                            items.addItem(itemJarWrapper.X, itemJarWrapper.Y, itemJarWrapper.Rotation,
+                                itemJarWrapper.Item.ToItem());
                     }
 
                     yield return null;
