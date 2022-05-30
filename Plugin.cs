@@ -19,7 +19,7 @@ namespace RFVault
     {
         private const int Major = 1;
         private const int Minor = 2;
-        private const int Patch = 3;
+        private const int Patch = 4;
 
         public static Plugin Inst;
         public static Configuration Conf;
@@ -54,13 +54,17 @@ namespace RFVault
                 UnturnedEvent.OnPrePlayerTookItem += PlayerEvent.OnPreItemTook;
                 UnturnedPatchEvent.OnPrePlayerDraggedItem += PlayerEvent.OnPreItemDragged;
                 UnturnedPatchEvent.OnPrePlayerSwappedItem += PlayerEvent.OnPreItemSwapped;
+#if RF
                 Level.onPostLevelLoaded += OnPostLevelLoaded;
+#endif
 
                 if (Level.isLoaded)
                 {
+#if RF
                     OnPostLevelLoaded(0);
+#endif
                     foreach (var steamPlayer in Provider.clients)
-                        steamPlayer.player.gameObject.TryAddComponent<PlayerComponent>().LoadInternal();
+                        steamPlayer.player.gameObject.TryAddComponent<PlayerComponent>();
                 }
             }
             else
@@ -78,12 +82,16 @@ namespace RFVault
                 UnturnedEvent.OnPrePlayerTookItem -= PlayerEvent.OnPreItemTook;
                 UnturnedPatchEvent.OnPrePlayerDraggedItem -= PlayerEvent.OnPreItemDragged;
                 UnturnedPatchEvent.OnPrePlayerSwappedItem -= PlayerEvent.OnPreItemSwapped;
+#if RF
                 Level.onPostLevelLoaded -= OnPostLevelLoaded;
+#endif
                 Library.DetachEvent(true);
+#if RF
                 Library.Uninitialize();
+#endif
         
                 foreach (var steamPlayer in Provider.clients)
-                    steamPlayer.player.GetComponent<PlayerComponent>().UnloadInternal();
+                    steamPlayer.player.gameObject.TryRemoveComponent<PlayerComponent>();
             }
         
             Inst = null;
@@ -119,9 +127,11 @@ namespace RFVault
             {$"{EResponse.PLAYER_NOT_FOUND}", "[RFVault] Can't find player under name {0}!"},
         };
 
+#if RF
         private static void OnPostLevelLoaded(int level)
         {
             Library.Initialize();
         }
+#endif
     }
 }

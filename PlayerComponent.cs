@@ -20,16 +20,6 @@ namespace RFVault
 
         protected override void Load()
         {
-            LoadInternal();
-        }
-
-        protected override void Unload()
-        {
-            UnloadInternal();
-        }
-
-        internal void LoadInternal()
-        {
             var vault = VaultUtil.GetVaults(Player).FirstOrDefault();
             if (vault != null)
                 SelectedVault = vault;
@@ -37,25 +27,29 @@ namespace RFVault
             Player.Player.inventory.onInventoryResized += OnInventoryResized;
         }
 
-        internal void UnloadInternal()
+        protected override void Unload()
         {
             Player.Player.inventory.onInventoryResized -= OnInventoryResized;
-            
+
             if (PlayerVaultItems != null)
                 OnInventoryResized(PlayerInventory.STORAGE, 0, 0);
         }
 
         private void OnInventoryResized(byte page, byte newwidth, byte newheight)
         {
-            // Logger.LogWarning($"[DEBUG] OnInventoryResized {Player.CharacterName} page:{page} newwidth:{newwidth} newheight:{newheight}");
-            if (page == PlayerInventory.STORAGE && newwidth == 0 && newheight == 0 && PlayerVault != null && PlayerVaultItems != null)
+            if (Plugin.Conf.DebugMode)
+                Logger.LogWarning(
+                    $"[{Plugin.Inst.Name}] [DEBUG] OnInventoryResized {Player.CharacterName} page:{page} newwidth:{newwidth} newheight:{newheight}");
+            
+            if (page == PlayerInventory.STORAGE && newwidth == 0 && newheight == 0 && PlayerVault != null &&
+                PlayerVaultItems != null)
             {
                 if (!IsBusy)
                 {
                     var itemsWrapper = ItemsWrapper.Create(PlayerVaultItems);
                     PlayerVault.VaultContent = itemsWrapper;
                 }
-                
+
                 IsBusy = true;
                 DatabaseManager.Queue.Enqueue(async () =>
                 {

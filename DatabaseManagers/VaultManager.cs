@@ -4,6 +4,7 @@ using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
+using HarmonyLib;
 using RFRocketLibrary.Models;
 using RFRocketLibrary.Storages;
 using RFRocketLibrary.Utils;
@@ -11,6 +12,7 @@ using RFVault.Enums;
 using RFVault.Models;
 using RFVault.Utils;
 using Rocket.Core.Logging;
+using SDG.Unturned;
 
 namespace RFVault.DatabaseManagers
 {
@@ -115,7 +117,7 @@ namespace RFVault.DatabaseManagers
             var vaultVersion = VaultVersionManager.Get();
             if (vaultVersion == null)
             {
-                vaultVersion = new VaultVersion {DatabaseVersion = 0};
+                vaultVersion = new VaultVersion { DatabaseVersion = 0 };
             }
 
             if (vaultVersion.DatabaseVersion == 0)
@@ -301,7 +303,8 @@ namespace RFVault.DatabaseManagers
                         {
                             var col = db.GetCollection<PlayerVault>(LiteDB_TableName);
                             existingVault = await col.Query().Where(x =>
-                                x.SteamId == playerVault.SteamId && x.VaultName == playerVault.VaultName).FirstOrDefaultAsync();
+                                    x.SteamId == playerVault.SteamId && x.VaultName == playerVault.VaultName)
+                                .FirstOrDefaultAsync();
                             if (existingVault != null)
                                 return;
 
@@ -322,8 +325,9 @@ namespace RFVault.DatabaseManagers
                         using (var connection =
                                new MySql.Data.MySqlClient.MySqlConnection(DatabaseManager.MySql_ConnectionString))
                         {
-                            var existing = await connection.ExecuteScalarAsync<bool>($"SELECT COUNT(DISTINCT 1) FROM `{MySql_TableName}` WHERE `SteamId` = @SteamId AND `VaultName` = @VaultName;",
-                                new {playerVault.SteamId, playerVault.VaultName});
+                            var existing = await connection.ExecuteScalarAsync<bool>(
+                                $"SELECT COUNT(DISTINCT 1) FROM `{MySql_TableName}` WHERE `SteamId` = @SteamId AND `VaultName` = @VaultName;",
+                                new { playerVault.SteamId, playerVault.VaultName });
                             if (existing)
                                 return;
 
@@ -356,14 +360,15 @@ namespace RFVault.DatabaseManagers
                 switch (Plugin.Conf.Database)
                 {
                     case EDatabase.JSON:
-                        Json_Collection.TryGetValue(new PlayerVault {SteamId = steamId, VaultName = vaultName},
+                        Json_Collection.TryGetValue(new PlayerVault { SteamId = steamId, VaultName = vaultName },
                             out var value);
                         return value;
                     case EDatabase.LITEDB:
                         using (var db = new LiteDB.Async.LiteDatabaseAsync(DatabaseManager.LiteDB_ConnectionString))
                         {
                             var col = db.GetCollection<PlayerVault>(LiteDB_TableName);
-                            return await col.Query().Where(x => x.SteamId == steamId && x.VaultName == vaultName).FirstOrDefaultAsync();
+                            return await col.Query().Where(x => x.SteamId == steamId && x.VaultName == vaultName)
+                                .FirstOrDefaultAsync();
                         }
                     case EDatabase.MYSQL:
                         using (var connection =
@@ -619,6 +624,56 @@ namespace RFVault.DatabaseManagers
 
                 MigrateCollection.Clear();
                 MigrateCollection.TrimExcess();
+            }
+            catch (Exception e)
+            {
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] VaultManager MigrateAsync: {e.Message}");
+                Logger.LogError($"[{Plugin.Inst.Name}] [ERROR] Details: {e}");
+            }
+
+            MigrateCollection.Clear();
+            MigrateCollection.TrimExcess();
+        }
+
+        internal static async Task AviMigrateAsync(string aviVaultMySQLConnectionString, string aviVaultMySQLTableName)
+        {
+            try
+            {
+                var aviVaults = new List<AviVault>();
+                using (var connection = new MySql.Data.MySqlClient.MySqlConnection(aviVaultMySQLConnectionString))
+                {
+                    var result = await connection.QueryAsync($"SELECT * FROM {aviVaultMySQLTableName};");
+                    var databases = result?.Cast<IDictionary<string, object>>();
+                    if (databases == null)
+                        return;
+
+                    foreach (var database in databases)
+                    {
+                        aviVaults.Add(new AviVault
+                        {
+                            Id = Convert.ToInt32(database["Id"]), OwnerId = database["OwnerId"].ToString(),
+                            VaultName = database["VaultName"].ToString(),
+                            StorageState = database["StorageState"] as byte[]
+                        });
+                    }
+                }
+
+                var lockerAsset = Assets.find(EAssetType.ITEM, 328) as ItemStorageAsset;
+                var lockerAssetCopy = lockerAsset.Copy();
+                var traverse = Traverse.Create(lockerAssetCopy);
+                var interactableStorage = new InteractableStorage();
+                foreach (var aviVault in aviVaults)
+                {
+                    var vault = Vault.Parse(aviVault.VaultName);
+                    traverse.Field("_storage_x").SetValue(vault.Width);
+                    traverse.Field("_storage_y").SetValue(vault.Height);
+                    interactableStorage.updateState(lockerAssetCopy, aviVault.StorageState);
+                    await AddAsync(new PlayerVault
+                    {
+                        SteamId = ulong.Parse(aviVault.OwnerId), VaultName = vault.Name,
+                        VaultContent = ItemsWrapper.Create(interactableStorage.items)
+                    });
+                }
             }
             catch (Exception e)
             {
